@@ -135,7 +135,7 @@ export default function KidsPage() {
                     display: 'block',
                   }}
                 >
-                  <source src="/videos/kids-hero.mp4" type="video/mp4" />
+                  <source src="https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/kids/kids-hero.mp4" type="video/mp4" />
                 </video>
               </div>
             </ScrollAnimation>
