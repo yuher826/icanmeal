@@ -1,27 +1,453 @@
+/* Pretendard — CDN에서 로드 (layout.tsx <head>에서 처리) */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   ICANMEAL DESIGN TOKENS
+   (icanmeal_site.html :root 그대로 복사 + 확장)
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── 기본 팔레트 ── */
+  --cream: #FBF5EA;
+  --cream-deep: #F3E9D8;
+  --ink: #2B2420;
+  --ink-soft: #5C5048;
+  --line: #E4D8C2;
+
+  /* ── 키즈 코럴 라인 ── */
+  --kids-coral: #E36B3B;
+  --kids-coral-deep: #C9572A;
+  --kids-butter: #F2B53E;
+  --kids-tint: #FCEBDC;
+
+  /* ── 실버 로즈 라인 ── */
+  --silver-rose: #A893C9;
+  --silver-rose-deep: #6F5499;
+  --silver-sage: #CBBBE3;
+  --silver-tint: #EFEAF7;
+
+  /* ── 포인트 ── */
+  --gold: #B5893F;
+  --white: #FFFFFF;
+
+  /* ── 폰트 ── */
+  --serif: "Noto Serif KR", serif;
+  --sans: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* ── 레이아웃 ── */
+  --nav-h: 76px;
+  --wrap-max: 1180px;
+
+  /* ── 그림자 ── */
+  --shadow-sm: 0 2px 8px rgba(43, 36, 32, 0.05);
+  --shadow-card: 0 2px 12px rgba(43, 36, 32, 0.06);
+  --shadow-hover: 0 14px 32px rgba(43, 36, 32, 0.10);
+  --shadow-modal: 0 24px 64px rgba(43, 36, 32, 0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--sans);
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+img, svg { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.serif { font-family: var(--serif); }
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.wrap {
+  max-width: var(--wrap-max);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+section { padding: 88px 0; }
+section.tight { padding: 64px 0; }
+
+.section-head {
+  max-width: 640px;
+  margin-bottom: 48px;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+}
+.section-head p {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  border: none;
+  margin: 0;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--ink);
+  padding: 11px 22px;
+  border-radius: 100px;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn-cta:hover {
+  background: var(--kids-coral-deep);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 9px 16px;
+  border-radius: 100px;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-ghost:hover {
+  background: var(--cream-deep);
+  color: var(--ink);
+}
+
+.btn-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--white);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 14px 30px;
+  border-radius: 100px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-light:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  padding: 10px 20px;
+  border-radius: 100px;
+  background: var(--white);
+  transition: border-color 0.2s, background 0.2s;
+}
+.btn-outline:hover {
+  border-color: var(--ink);
+  background: var(--cream-deep);
+}
+
+/* ============================================================
+   CHIPS
+   ============================================================ */
+.chip {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+}
+.chip.kids   { background: var(--kids-tint);   color: var(--kids-coral-deep); }
+.chip.silver { background: var(--silver-tint); color: var(--silver-rose-deep); }
+.chip.gold   { background: #FFF3D6;            color: var(--gold); }
+
+/* ============================================================
+   PRODUCT GRID
+   ============================================================ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .product-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .product-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   TABBAR
+   ============================================================ */
+.tabbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.tabbar button {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--white);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.tabbar button.active {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+}
+
+/* ============================================================
+   CTA BANNER
+   ============================================================ */
+.cta-banner {
+  background: linear-gradient(120deg, var(--kids-coral) 0%, var(--silver-rose) 100%);
+  border-radius: 26px;
+  padding: 56px 48px;
+  color: #fff;
+  text-align: center;
+}
+.cta-banner h3 {
+  font-family: var(--serif);
+  font-size: 28px;
+  margin-bottom: 14px;
+}
+.cta-banner p {
+  opacity: 0.92;
+  margin-bottom: 28px;
+  font-size: 15px;
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+.form-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 36px;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 7px;
+  display: block;
+  color: var(--ink-soft);
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  background: var(--cream);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(43, 36, 32, 0.07);
+}
+.field textarea { min-height: 96px; resize: vertical; }
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.anim {
+  opacity: 0;
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.anim-up    { transform: translateY(32px); }
+.anim-left  { transform: translateX(-32px); }
+.anim-right { transform: translateX(32px); }
+.anim-scale { transform: scale(0.94); }
+.anim-fade  { /* opacity only */ }
+
+.anim.visible {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+
+/* stagger */
+.delay-100 { transition-delay: 0.10s; }
+.delay-200 { transition-delay: 0.20s; }
+.delay-300 { transition-delay: 0.30s; }
+.delay-400 { transition-delay: 0.40s; }
+.delay-500 { transition-delay: 0.50s; }
+.delay-600 { transition-delay: 0.60s; }
+
+/* ============================================================
+   SKELETON LOADING
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--cream-deep) 25%,
+    #f9f2e2 50%,
+    var(--cream-deep) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 36, 32, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal-box {
+  background: var(--cream);
+  border-radius: 22px;
+  max-width: 760px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  position: relative;
+  animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background: rgba(227, 107, 59, 0.15);
+  color: var(--kids-coral-deep);
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================================
+   RESPONSIVE HELPERS (공통)
+   ============================================================ */
+@media (max-width: 760px) {
+  section          { padding: 60px 0; }
+  section.tight    { padding: 44px 0; }
+  .section-head h2 { font-size: 26px; }
+  .cta-banner      { padding: 40px 24px; }
+  .cta-banner h3   { font-size: 22px; }
 }
