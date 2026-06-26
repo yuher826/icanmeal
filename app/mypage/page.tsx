@@ -172,7 +172,7 @@ export default function MyPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {MOCK_ORDERS.map((o, i) => (
+                    {MOCK_ORDERS.map((o) => (
                       <tr key={o.id} style={{ borderTop: '1px solid var(--line)', fontSize: 14 }}>
                         <td style={{ padding: '16px 18px', color: 'var(--ink-soft)', fontFamily: 'monospace', fontSize: 12 }}>{o.id}</td>
                         <td style={{ padding: '16px 18px', color: 'var(--ink-soft)' }}>{o.date}</td>

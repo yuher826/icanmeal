@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ScrollAnimation from '@/components/ui/ScrollAnimation'
-import { CASE_ITEMS } from '@/constants'
 
 export const metadata: Metadata = {
   title: '활동가이드 | ICANMEAL',
