@@ -9,23 +9,6 @@ export const metadata: Metadata = {
     '키즈·실버 특화 쿠킹키트를 기관에 공급하는 B2B 푸드에듀케이션 브랜드 아이캔밀입니다.',
 }
 
-/* ── 배경 데코 서클 ── */
-function BgCircles({ color }: { color: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
-      viewBox="0 0 600 500"
-      fill="none"
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <circle cx="500" cy="60"  r="160" fill={color} opacity="0.20" />
-      <circle cx="60"  cy="420" r="110" fill={color} opacity="0.13" />
-      <circle cx="280" cy="260" r="70"  fill={color} opacity="0.08" />
-    </svg>
-  )
-}
-
 /* ── 스텝 번호 원 ── */
 function StepNum({ num }: { num: string }) {
   return (
@@ -50,62 +33,63 @@ export default function HomePage() {
   return (
     <>
       {/* ════════════════════════════════════════
-          HERO — 좌(키즈) / 우(실버) 분할 배경
+          HERO — 비디오 배경
           ════════════════════════════════════════ */}
-      <section style={{ padding: 0, position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: 0, position: 'relative', overflow: 'hidden', minHeight: 560 }}>
 
-        {/* 분할 배경 */}
-        <div className="hero-bg-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 560 }}>
-          <div
-            className="hero-half-kids"
-            style={{
-              background: 'linear-gradient(160deg, var(--kids-tint), var(--cream) 75%)',
-              position: 'relative', overflow: 'hidden',
-              display: 'flex', alignItems: 'center', padding: '80px 56px',
-              minHeight: 560,
-            }}
-          >
-            <BgCircles color="var(--kids-coral)" />
-          </div>
-          <div
-            className="hero-half-silver"
-            style={{
-              background: 'linear-gradient(200deg, var(--silver-tint), var(--cream) 75%)',
-              position: 'relative', overflow: 'hidden',
-              display: 'flex', alignItems: 'center', padding: '80px 56px',
-              minHeight: 560,
-            }}
-          >
-            <BgCircles color="var(--silver-rose)" />
-          </div>
-        </div>
+        {/* 비디오 배경 */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        >
+          <source src="/videos/kids-hero.mp4" type="video/mp4" />
+        </video>
 
-        {/* 중앙 분할선 */}
+        {/* 어두운 그라디언트 오버레이 — 텍스트 가독성 확보 */}
         <div
           aria-hidden="true"
-          className="hero-center-line"
           style={{
-            position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-            height: '100%', width: 1, background: 'var(--line)', zIndex: 2,
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(160deg, rgba(43,36,32,0.55) 0%, rgba(43,36,32,0.40) 100%)',
+            zIndex: 1,
           }}
         />
 
         {/* 콘텐츠 오버레이 */}
         <div
           style={{
-            position: 'absolute', inset: 0, zIndex: 5,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '84px 28px 56px', textAlign: 'center',
+            position: 'relative',
+            zIndex: 5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '140px 28px 100px',
+            textAlign: 'center',
+            minHeight: 560,
           }}
         >
           <div style={{ maxWidth: 780 }}>
-            <span className="eyebrow">아이캔밀 쿠킹키트</span>
+            <span className="eyebrow" style={{ color: 'rgba(255,255,255,0.80)' }}>아이캔밀 쿠킹키트</span>
             <h1
               style={{
                 fontFamily: 'var(--serif)',
                 fontSize: 'clamp(30px, 4.5vw, 50px)',
                 lineHeight: 1.32, fontWeight: 700,
                 letterSpacing: '-0.01em', marginBottom: 20,
+                color: '#fff',
+                textShadow: '0 2px 16px rgba(0,0,0,0.30)',
               }}
             >
               <span style={{ display: 'block' }}>만들고, 나누고,</span>
@@ -113,8 +97,9 @@ export default function HomePage() {
             </h1>
             <p
               style={{
-                fontSize: 17, color: 'var(--ink-soft)',
+                fontSize: 17, color: 'rgba(255,255,255,0.88)',
                 maxWidth: 460, margin: '0 auto 28px',
+                textShadow: '0 1px 8px rgba(0,0,0,0.20)',
               }}
             >
               키즈·실버 특화 쿠킹키트와 전용 교안·영상으로 기관 수업을 특별하게 만드세요.
@@ -128,9 +113,10 @@ export default function HomePage() {
                   style={{
                     fontSize: 12.5, fontWeight: 600,
                     padding: '8px 16px', borderRadius: 100,
-                    border: '1px solid var(--line)',
-                    background: 'rgba(255,255,255,0.88)',
-                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    background: 'rgba(255,255,255,0.14)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#fff',
                   }}
                 >
                   {t}
@@ -151,11 +137,11 @@ export default function HomePage() {
                 href="/auth/register"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  fontSize: 14, fontWeight: 600, color: 'var(--ink)',
+                  fontSize: 14, fontWeight: 600, color: '#fff',
                   padding: '14px 24px', borderRadius: 100,
-                  border: '1.5px solid var(--line)',
-                  background: 'rgba(255,255,255,0.88)',
-                  backdropFilter: 'blur(6px)',
+                  border: '1.5px solid rgba(255,255,255,0.50)',
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(8px)',
                 }}
               >
                 기관 회원가입
@@ -582,9 +568,6 @@ export default function HomePage() {
 
         /* 모바일 반응형 */
         @media (max-width: 760px) {
-          .hero-bg-grid { grid-template-columns: 1fr !important; }
-          .hero-half-kids, .hero-half-silver { min-height: 220px !important; padding: 48px 24px !important; }
-          .hero-center-line { display: none !important; }
           .line-grid-home { grid-template-columns: 1fr !important; }
           .steps-row { grid-template-columns: 1fr 1fr !important; gap: 32px 0 !important; }
           .steps-dotline { display: none !important; }
