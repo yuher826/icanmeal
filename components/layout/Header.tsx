@@ -5,28 +5,25 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NAV_ITEMS } from '@/constants'
 
-/* 로고마크 SVG */
+/* 로고마크 — 오렌지 셰프 모자 캐릭터 뱃지 */
 function LogoMark() {
   return (
-    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-      <circle cx="17" cy="17" r="17" fill="url(#lg-logo)" />
-      <text
-        x="17" y="22"
-        textAnchor="middle"
-        fill="white"
-        fontSize="16"
-        fontWeight="800"
-        fontFamily="var(--serif)"
-      >
-        I
-      </text>
-      <defs>
-        <linearGradient id="lg-logo" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#E36B3B" />
-          <stop offset="1" stopColor="#A893C9" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <span
+      aria-hidden="true"
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: 10,
+        background: 'var(--kids-coral-deep)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 15,
+        flexShrink: 0,
+      }}
+    >
+      👨‍🍳
+    </span>
   )
 }
 
@@ -61,7 +58,7 @@ export default function Header() {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          background: scrolled ? 'rgba(251,245,234,0.97)' : 'rgba(251,245,234,0.92)',
+          background: scrolled ? 'rgba(244,242,238,0.97)' : 'rgba(244,242,238,0.92)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           borderBottom: '1px solid var(--line)',
@@ -72,11 +69,10 @@ export default function Header() {
           style={{
             maxWidth: 'var(--wrap-max)',
             margin: '0 auto',
-            padding: '0 28px',
+            padding: '0 22px',
             height: 'var(--nav-h)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
             gap: 16,
           }}
         >
@@ -86,46 +82,31 @@ export default function Header() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 8,
               flexShrink: 0,
               textDecoration: 'none',
+              marginRight: 8,
             }}
           >
             <LogoMark />
-            <div>
-              <span
-                style={{
-                  fontFamily: 'var(--serif)',
-                  fontSize: 20,
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  color: 'var(--ink)',
-                  display: 'block',
-                  lineHeight: 1.1,
-                }}
-              >
-                ICANMEAL
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--sans)',
-                  fontSize: 9,
-                  fontWeight: 600,
-                  letterSpacing: '0.12em',
-                  color: 'var(--ink-soft)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Kids &amp; Silver
-              </span>
-            </div>
+            <span
+              style={{
+                fontSize: 16,
+                fontWeight: 800,
+                letterSpacing: '0.01em',
+                color: 'var(--kids-coral-deep)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              I CAN MEAL
+            </span>
           </Link>
 
           {/* ── 데스크톱 네비 ── */}
           <nav
             aria-label="메인 메뉴"
             className="header-desktop-nav"
-            style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center' }}
+            style={{ display: 'flex', gap: 4, flex: 1 }}
           >
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href)
@@ -134,14 +115,14 @@ export default function Header() {
                   key={item.href}
                   href={item.href}
                   style={{
-                    fontSize: 14.5,
-                    fontWeight: 500,
-                    padding: '9px 16px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    padding: '9px 15px',
                     borderRadius: 100,
                     whiteSpace: 'nowrap',
                     transition: 'background 0.2s, color 0.2s',
                     background: active ? 'var(--ink)' : 'transparent',
-                    color: active ? 'var(--cream)' : 'var(--ink-soft)',
+                    color: active ? '#fff' : 'var(--ink-soft)',
                   }}
                 >
                   {item.label}
@@ -151,7 +132,7 @@ export default function Header() {
           </nav>
 
           {/* ── 우측 액션 ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
             <Link
               href="/auth/login"
               className="btn-ghost header-desktop-only"
@@ -159,34 +140,10 @@ export default function Header() {
               로그인
             </Link>
             <Link
-              href="/auth/register"
+              href="/inquiry"
               className="btn-cta header-desktop-only"
             >
-              기관 가입
-            </Link>
-
-            {/* 장바구니 아이콘 */}
-            <Link
-              href="/cart"
-              aria-label="장바구니"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'var(--white)',
-                border: '1px solid var(--line)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--ink-soft)',
-                transition: 'border-color 0.2s',
-              }}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
+              맞춤 제안 받기
             </Link>
 
             {/* 햄버거 (모바일) */}
@@ -233,7 +190,7 @@ export default function Header() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(43,36,32,0.4)',
+              background: 'rgba(46,37,31,0.4)',
               backdropFilter: 'blur(3px)',
               zIndex: 98,
             }}
@@ -298,14 +255,14 @@ export default function Header() {
                 로그인
               </Link>
               <Link
-                href="/auth/register"
+                href="/inquiry"
                 style={{
                   flex: 1, textAlign: 'center', padding: '13px',
                   borderRadius: 12, background: 'var(--ink)',
-                  fontSize: 14, fontWeight: 700, color: 'var(--cream)',
+                  fontSize: 14, fontWeight: 700, color: '#fff',
                 }}
               >
-                기관 가입
+                맞춤 제안 받기
               </Link>
             </div>
           </div>
