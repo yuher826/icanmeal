@@ -9,12 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        /* icanmeal_site.html :root 토큰 연동 */
+        /* ICANMEAL_몰_검수용_1.html 디자인 시안 토큰 연동 */
         cream:             'var(--cream)',
         'cream-deep':      'var(--cream-deep)',
         ink:               'var(--ink)',
         'ink-soft':        'var(--ink-soft)',
         line:              'var(--line)',
+        'line-soft':       'var(--line-soft)',
         'kids-coral':      'var(--kids-coral)',
         'kids-coral-deep': 'var(--kids-coral-deep)',
         'kids-butter':     'var(--kids-butter)',
@@ -26,6 +27,7 @@ const config: Config = {
         gold:              'var(--gold)',
       },
       fontFamily: {
+        /* 시안 전 화면 Pretendard 산세리프 기준 (serif 별칭은 하위호환용) */
         serif: ['var(--serif)'],
         sans:  ['var(--sans)'],
       },
