@@ -29,7 +29,7 @@ export default function MonthlyKitCard({ kit, size = 'default' }: Props) {
       <div
         style={{
           position: 'relative',
-          height: size === 'large' ? 260 : 190,
+          aspectRatio: '16 / 9',
           background: tint,
           overflow: 'hidden',
         }}
@@ -38,7 +38,7 @@ export default function MonthlyKitCard({ kit, size = 'default' }: Props) {
         <img
           src={kit.image}
           alt={kit.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </div>
 
