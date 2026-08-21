@@ -27,9 +27,9 @@ DROP POLICY IF EXISTS media_admin_write        ON storage.objects;
 DROP POLICY IF EXISTS media_admin_update       ON storage.objects;
 DROP POLICY IF EXISTS media_admin_delete       ON storage.objects;
 
--- ⚠️ 버킷 자체는 지우지 않는다. 지우면 업로드한 영상 파일이 전부 날아간다.
---    정말 지우려면 아래 주석을 직접 해제할 것 (파일 먼저 백업).
--- DELETE FROM storage.buckets WHERE id = 'materials';
+-- ⚠️ 버킷 자체는 SQL 로 지울 수 없다 (must be owner of table buckets).
+--    애초에 지우면 안 되기도 한다 — 업로드한 영상 파일이 전부 날아간다.
+--    정말 지워야 한다면 대시보드 Storage 에서 파일 백업 후 직접 삭제할 것.
 
 
 -- ── 테이블 (FK 역순) ───────────────────────────────────────
