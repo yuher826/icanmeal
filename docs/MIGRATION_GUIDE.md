@@ -1,7 +1,11 @@
 # 마이그레이션 실행 가이드
 
-**상태: 작성만 완료 — 아직 실행하지 않음.**
-아래 순서대로 직접 실행할 것. Claude 는 SQL 을 실행하지 않았다.
+아래 순서대로 직접 실행할 것. Claude 는 SQL 을 실행하지 않는다.
+
+> **2026-08-22 갱신 — `_0007_storage.sql` 수정됨**
+> 버킷 생성 SQL 이 `ERROR: 42501: must be owner of table buckets` 로 실패해
+> 해당 부분을 제거하고 **정책만** 남겼다.
+> **버킷은 대시보드에서 수동 생성**해야 한다 → 3-A 절 참고.
 
 ---
 
@@ -54,11 +58,13 @@ SELECT id, name, public, file_size_limit
 | 4 | `202608220004_orders.sql` | 주문 · 주문상세(스냅샷) · 배송 · 채번 함수 | 3 |
 | 5 | `202608220005_inquiries.sql` | 문의(회원+비회원 통합) · 메시지 | 4 |
 | 6 | `202608220006_rls.sql` | 헬퍼 함수 · RLS 정책 · **컬럼 권한 회수(Q4)** | 5 |
-| 7 | `202608220007_storage.sql` | `media`(public) · **`materials`(private)** 버킷 + 정책 | 6 |
+| — | **🖱 버킷 수동 생성** (3-A 절) | `media`(public) · `materials`(private) — **SQL 아님, 대시보드 작업** | — |
+| 7 | `202608220007_storage.sql` | Storage **정책만** (버킷 생성 없음) | 6 + 버킷 |
 | 8 | `seeds/001_products.sql` | 상품 24종 시드 | 3 |
 
 > 6번(RLS)은 반드시 모든 테이블이 만들어진 뒤에 실행해야 한다.
-> 7번(Storage)은 헬퍼 함수(`is_admin`, `has_purchased_product`)를 쓰므로 6번 뒤여야 한다.
+> 7번(Storage)은 헬퍼 함수(`is_admin`, `has_purchased_product`)를 쓰므로 6번 뒤여야 하고,
+> **버킷이 먼저 존재해야 한다**(파일 맨 앞에서 검사하고 없으면 중단시킨다).
 
 ### 실행 후 검증
 
@@ -107,11 +113,99 @@ SELECT public.is_admin(), public.is_super_admin();
 
 ---
 
-## 3. Storage `materials` 버킷 — 실제 게이트 구현
+## 3. Storage 설정
 
-7번 마이그레이션이 버킷과 정책을 만들지만, **그것만으로는 부족하다.**
+### 3-A. 버킷은 대시보드에서 수동 생성 (SQL 불가) 🖱
 
-### 경로 규칙 (반드시 지킬 것)
+> **왜 수동인가**
+> 초판 `_0007_storage.sql` 에는 `INSERT INTO storage.buckets` 가 있었으나 실행 시 실패했다:
+>
+> ```
+> ERROR: 42501: must be owner of table buckets
+> ```
+>
+> `storage` 스키마는 `supabase_storage_admin` 이 소유하고 있어서
+> SQL Editor(postgres 롤)로는 **버킷 생성도, `COMMENT ON` 도 불가능**하다.
+> 버킷은 대시보드 또는 Management API 로만 만들 수 있다.
+> → 마이그레이션 파일에서 버킷 생성 부분을 제거하고 **정책만** 남겼다.
+
+**절차**
+
+```
+Supabase Dashboard → 프로젝트 icanmeal → Storage → New bucket
+```
+
+| 버킷 | Public | File size limit | 용도 |
+|---|---|---|---|
+| `media` | ✅ **Public 체크** | 기본값 | 홈/키즈/실버 히어로 영상 (마케팅 자산) |
+| `materials` | ❌ **Public 해제** | 500 MB 권장 | 교안·활동지·PPT·수업영상 (유료 자산) |
+
+> `media` 는 이전부터 존재하므로 보통 새로 만들 필요가 없다.
+> `materials` 만 새로 만들면 된다. **Public 체크를 반드시 해제**할 것 —
+> public 이면 URL 만 알아도 누구나 받을 수 있어 영상 게이트가 무의미해진다.
+
+**생성 후 확인** (SQL Editor):
+
+```sql
+SELECT id, name, public, file_size_limit
+  FROM storage.buckets
+ ORDER BY id;
+```
+
+기대 결과:
+
+| id | public |
+|---|---|
+| `materials` | `false` |
+| `media` | `true` |
+
+`materials.public` 이 `true` 로 나오면 대시보드에서 버킷 설정을 열어 Public 을 해제한다.
+
+---
+
+### 3-B. 정책 실행 (`_0007_storage.sql`)
+
+버킷 2개를 확인한 뒤 실행한다. 파일 맨 앞의 `DO` 블록이 버킷 존재를 검사해서,
+없으면 명확한 메시지와 함께 중단시킨다.
+
+실행 후 정책 8개가 만들어졌는지 확인:
+
+```sql
+SELECT policyname, cmd
+  FROM pg_policies
+ WHERE schemaname = 'storage' AND tablename = 'objects'
+ ORDER BY policyname;
+```
+
+기대: `materials_*` 4개 + `media_*` 4개 = **8개**
+
+#### 만약 `CREATE POLICY` 도 권한 오류가 난다면
+
+`storage.objects` 역시 `supabase_storage_admin` 소유라, 프로젝트에 따라
+`must be owner of table objects` 가 날 수 있다. 그때는 **대시보드에서 같은 조건으로** 만든다:
+
+```
+Storage → materials 버킷 → Policies → New policy → For full customization
+```
+
+| 정책명 | Allowed operation | USING / WITH CHECK 식 |
+|---|---|---|
+| `materials_read_purchased` | SELECT | `_0007_storage.sql` 의 `USING (...)` 안쪽을 그대로 붙여넣기 |
+| `materials_admin_write` | INSERT | `bucket_id = 'materials' AND public.is_admin()` |
+| `materials_admin_update` | UPDATE | 위와 동일 |
+| `materials_admin_delete` | DELETE | 위와 동일 |
+
+`media` 버킷도 같은 방식으로 4개를 만든다.
+
+> 💡 `media` 정책은 급하지 않다. public 버킷의 `/object/public/...` 경로는
+> RLS 를 우회하므로 히어로 영상은 정책 없이도 이미 잘 나온다.
+> **`materials_read_purchased` 만 확실히 걸면 된다.**
+
+---
+
+### 3-C. 실제 게이트 구현 — 정책만으로는 부족하다
+
+#### 경로 규칙 (반드시 지킬 것)
 
 ```
 materials/{product_slug}/{type}/{파일명}
@@ -122,7 +216,7 @@ materials/{product_slug}/{type}/{파일명}
 정책이 **첫 번째 폴더명을 `products.slug` 로 해석**해 구매 여부를 판정한다.
 경로 규칙이 깨지면 접근 제어가 통째로 무력화된다.
 
-### 서버에서 파일 내려주는 올바른 순서
+#### 서버에서 파일 내려주는 올바른 순서
 
 ```ts
 // app/api/materials/[id]/route.ts (예시 — 아직 미구현)
@@ -151,7 +245,7 @@ return Response.json({ url: signed.signedUrl })
 > ⛔ 키즈밀 `app/api/download/route.ts` 를 복사하지 말 것.
 > 인증이 없고 임의 URL 을 프록시해 SSRF 까지 열려 있다.
 
-### 히어로 영상은 그대로 public
+#### 히어로 영상은 그대로 public
 
 `media` 버킷은 마케팅 자산이라 공개가 맞다 (Q2 결정 A안).
 `constants/index.ts` 의 `HERO_VIDEOS` 는 변경 불필요.
@@ -177,7 +271,12 @@ return Response.json({ url: signed.signedUrl })
 
 `ROLLBACK_all.sql` 은 파일명이 타임스탬프로 시작하지 않는다.
 "순서대로 실행" 대상이 아님을 파일명으로 구분하기 위함이다.
-Storage 버킷은 기본적으로 **지우지 않는다** (업로드한 영상이 날아가므로).
+
+**Storage 는 롤백 대상이 아니다.**
+정책은 `DROP POLICY` 로 지워지지만, **버킷은 SQL 로 지울 수 없다**
+(생성과 같은 이유 — `must be owner of table buckets`).
+애초에 지우면 안 되기도 하다. 업로드한 영상 파일이 전부 날아간다.
+정말 지워야 한다면 대시보드에서 파일 백업 후 직접 삭제할 것.
 
 ---
 
