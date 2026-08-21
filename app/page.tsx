@@ -255,10 +255,10 @@ export default function HomePage() {
 
           <div className="line-grid-home" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
             <ScrollAnimation animation="up" delay={100}>
-              <MonthlyKitCard kit={featuredKids} size="large" aspect="16 / 9" />
+              <MonthlyKitCard kit={featuredKids} size="large" />
             </ScrollAnimation>
             <ScrollAnimation animation="up" delay={200}>
-              <MonthlyKitCard kit={featuredSilver} size="large" aspect="1 / 1" />
+              <MonthlyKitCard kit={featuredSilver} size="large" />
             </ScrollAnimation>
           </div>
         </div>

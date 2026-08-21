@@ -5,15 +5,16 @@ interface Props {
   kit: MonthlyKit
   /** large: 홈 "이번 달 추천" 섹션에서 쓰는 강조 카드 */
   size?: 'default' | 'large'
-  /** 이미지 컨테이너 종횡비. 키즈(16:9 와이드)와 실버(1:1, 정사각 일러스트)가 다름 */
-  aspect?: string
 }
 
-export default function MonthlyKitCard({ kit, size = 'default', aspect = '16 / 9' }: Props) {
+export default function MonthlyKitCard({ kit, size = 'default' }: Props) {
   const isKids = kit.line === 'kids'
   const accent = isKids ? 'var(--kids-coral-deep)' : 'var(--silver-rose-deep)'
-  const tint = isKids ? 'var(--kids-tint)' : 'var(--silver-tint)'
   const lineLabel = isKids ? '키즈' : '실버'
+  /* 키즈 일러스트는 투명 배경이라 kids-tint와 자연스럽게 어울리지만,
+     실버 일러스트는 PNG 자체에 흰색 배경이 포함돼 있어 컨테이너 배경도
+     동일 계열(흰색)로 맞춰야 위아래 경계선이 보이지 않는다. */
+  const imageBg = isKids ? 'var(--kids-tint)' : 'var(--white)'
 
   return (
     <Link
@@ -31,8 +32,8 @@ export default function MonthlyKitCard({ kit, size = 'default', aspect = '16 / 9
       <div
         style={{
           position: 'relative',
-          aspectRatio: aspect,
-          background: tint,
+          aspectRatio: '16 / 9',
+          background: imageBg,
           overflow: 'hidden',
         }}
       >
@@ -62,6 +63,7 @@ export default function MonthlyKitCard({ kit, size = 'default', aspect = '16 / 9
             fontSize: 13.5,
             color: 'var(--ink-soft)',
             lineHeight: 1.55,
+            minHeight: 'calc(1.55em * 2)',
             marginBottom: 14,
             display: '-webkit-box',
             WebkitLineClamp: 2,
