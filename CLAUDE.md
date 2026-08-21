@@ -183,6 +183,99 @@ public/images/
 
 ---
 
+## 🩺 로컬 개발 트러블슈팅 (Windows)
+
+### 증상: `.next` 파일 잠금 에러가 반복된다
+
+```
+Error: UNKNOWN: unknown error, open
+'C:\Users\Yuher\Projects\icanmeal\.next\static\chunks\app\layout.js'
+errno: -4094, code: 'UNKNOWN'
+```
+
+`.next` 를 지우고 재시작하면 잠깐 되다가 또 난다.
+
+### 원인 (2026-08-22 진단) — 하나가 아니라 셋이 겹쳐 있었다
+
+| # | 원인 | 확인 결과 | 대응 |
+|---|------|----------|------|
+| ① | **webpack 디스크 캐시 쓰기 경합**<br>`.next/cache/webpack/*.pack.gz` 를 여러 워커가 동시에 쓰고 rename | 해당 파일 존재 확인 | ✅ 코드로 해결 |
+| ② | **`next dev` 와 `next build` 가 같은 `.next` 를 동시 사용** | dev 서버가 떠 있는 채로 build 를 여러 번 돌린 이력 확인 | ✅ 코드로 해결 |
+| ③ | **실시간 감시 백신(알약)이 파일을 잠금** | 알약이 활성(`0x41000`), Defender 실시간 보호는 꺼져 있음 | ⚠️ **수동 설정 필요** |
+
+**확인했지만 원인이 아니었던 것**
+
+- ❌ OneDrive 동기화 — 프로젝트는 `C:\Users\Yuher\Projects\icanmeal` 로 `%OneDrive%`(`C:\Users\Yuher\OneDrive`) 밖에 있다. 재분석 지점·클라우드 속성도 없음
+- ❌ `.gitignore` 누락 — `/.next/` 는 처음부터 있었다 (애초에 gitignore 는 파일 잠금과 무관)
+- ❌ `next.config.mjs` 의 충돌 설정 — 설정이 **비어 있었다**(`{}`). 문제는 잘못된 설정이 아니라 **Windows 대응이 아예 없던 것**
+- ❌ dev 서버 중복 실행 — 확인 시점엔 1개만 떠 있었다 (npm → next CLI → 서버 워커 3개 프로세스는 정상)
+
+### 해결 ①② — `next.config.mjs` (개발 모드 전용)
+
+```js
+if (isDev) {
+  config.distDir = '.next-dev'              // ② dev/build 산출물 분리
+  config.experimental = { workerThreads: false, cpus: 1 }
+}
+webpackConfig.cache = false                 // ① 디스크 캐시 끄고 메모리만
+webpackConfig.watchOptions.ignored = [...]  // 워처 부하 감소
+```
+
+- **프로덕션 빌드·배포에는 영향 없다.** `next build` 는 그대로 `.next` 를 쓴다
+- `distDir` 분리 덕분에 **dev 서버가 떠 있어도 `npm run build` 를 돌릴 수 있다**
+- 키즈밀에서 같은 증상을 먼저 겪고 검증한 대응이다 (`kizmeal-renewal/next.config.mjs`)
+
+검증: dev 실행 중 build 동시 실행 → 종료코드 0, 잠금 에러 0건, dev 서버 정상 유지.
+`.next-dev/cache/webpack` 이 생성되지 않는 것으로 캐시 비활성화 확인.
+
+### 해결 ③ — 백신(알약) 예외 등록 ⚠️ 직접 해주세요
+
+코드로는 못 막는다. 알약이 webpack 이 빠르게 쓰는 파일을 스캔하며 잠그면 같은 에러가 난다.
+
+```
+알약 → 환경설정 → 실시간 검사 → 검사 제외 설정
+  ├ 폴더 추가 : C:\Users\Yuher\Projects\icanmeal
+  └ 폴더 추가 : C:\Users\Yuher\Projects\kizmeal-renewal   (같은 증상 예방)
+```
+
+Windows Defender 도 켜서 쓰게 되면 관리자 PowerShell 에서:
+
+```powershell
+Add-MpPreference -ExclusionPath  "C:\Users\Yuher\Projects"
+Add-MpPreference -ExclusionProcess "node.exe"
+```
+
+> 개발 폴더만 제외하는 것이라 일반적인 보안 위험은 낮다.
+> 다만 `node_modules` 에 악성 패키지가 들어오는 경우까지 막지는 못하니
+> 의존성 추가 시에는 주의할 것.
+
+### 재발 시 — `npm run dev:clean`
+
+```bash
+npm run dev:clean
+```
+
+1. 이 프로젝트의 좀비 next 프로세스 종료 (포트 3000 + 커맨드라인이 이 프로젝트인 것만)
+2. `.next-dev`, `.next` 삭제
+3. `next dev` 기동
+
+PowerShell / cmd / Git Bash 어디서든 동작한다
+(`package.json` 에 PowerShell 전용 문법을 넣으면 Git Bash 에서 깨지므로 node 스크립트로 뒀다).
+
+**다른 프로젝트의 node 프로세스는 건드리지 않는다** — 커맨드라인에 이 프로젝트 경로가
+포함된 것만 종료한다.
+
+삭제가 실패하면 아직 파일을 잡고 있는 프로세스가 있다는 뜻이다.
+편집기/터미널을 닫고 다시 시도하거나 위 백신 예외를 확인할 것.
+
+### 습관으로 예방
+
+- `npm run dev` 를 여러 개 띄우지 말 것 (포트가 3001로 밀리면 이미 하나 떠 있는 것)
+- 작업 끝나면 `Ctrl+C` 로 dev 서버를 제대로 종료 (터미널 창만 닫으면 좀비가 남는다)
+- `.next-dev` / `.next` 는 언제 지워도 되는 산출물이다. 지웠다고 잃는 것은 없다
+
+---
+
 ## 작업 규칙
 
 - 커밋 메시지는 한글 OK, prefix는 `feat:` `fix:` `chore:` `style:` 사용

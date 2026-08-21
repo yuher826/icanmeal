@@ -12,6 +12,9 @@
 # next.js
 /.next/
 /out/
+# 개발 전용 산출물 — next.config.mjs 에서 dev 만 distDir 을 분리했다
+# (dev 와 build 가 같은 .next 를 동시에 써서 나던 Windows 파일 잠금 대응)
+/.next-dev/
 
 # production
 /build
