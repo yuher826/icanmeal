@@ -137,49 +137,110 @@ public/images/
 
 ## 진행 상황
 
+> 최종 갱신: 2026-08-22
+
+### ⛔ 지금 막혀 있는 것
+
+- [ ] **Vercel 에 `SUPABASE_SERVICE_ROLE_KEY` 추가** — 아직 안 됨
+  - 로컬(`.env.local`)에는 있어서 개발 중에는 승인 버튼이 동작하지만,
+    **배포본에서는 기관 승인/반려가 실패한다**
+  - `Vercel → icanmeal → Settings → Environment Variables`
+    → `SUPABASE_SERVICE_ROLE_KEY` 추가 (Production/Preview 둘 다) → **Redeploy**
+  - ⚠️ `NEXT_PUBLIC_` 접두사 절대 금지 (붙이면 브라우저에 노출되어 DB 전체가 열린다)
+
 ### ✅ 완료
-- Next.js + TS + Tailwind 세팅, Supabase 연동 (`lib/supabase.ts`)
-- 전체 페이지 뼈대: 홈 / kids / silver / program / guide / inquiry / auth(login·register) / mypage
-- Vercel 배포 + 환경변수 + Deployment Protection 해제
-- Supabase Storage `media` 버킷 + videos/kids, videos/silver 폴더
+
+**기반**
+- Next.js + TS + Tailwind 세팅, Supabase 연동
+- 전체 페이지 뼈대: 홈 / kids / silver / program / guide / inquiry / auth / mypage
+- Vercel 배포 + Deployment Protection 해제
+- Supabase Storage `media` 버킷
+
+**디자인 (PR #1 ~ #7)**
 - 시안 기준 전면 리디자인 (PR #1)
-- 허이사님 에셋 수령 → 이미지 `public/images/` 배치, 동영상 Storage 업로드
-- **이미지/동영상 전체 페이지 적용 완료** (PR #2)
+- 이미지/동영상 전체 페이지 적용 (PR #2)
   — 로고·마스코트, 키즈/실버 24종 제품 이미지, 활동사례 사진, 히어로 영상 3종
-- **카드 디자인 시안 일치 완료** (PR #3 ~ #6)
-  — `object-fit: contain` + 16:9 통일, 실버 배경 흰색 정규화, 카드 높이 정렬
-- **계절 필터 버그 수정 완료** (PR #7)
-  — `ScrollAnimation` 이 DOM 을 직접 조작해 `visible` 클래스가 리렌더링에 지워지던 문제.
-    React state 로 전환. 키즈·실버 양쪽 해결
-- **Supabase URL 오타 수정 완료** (PR #8) — `.env.local` + Vercel 환경변수
-  — 더불어 `constants/index.ts` 의 Storage URL 하드코딩 제거
-- **DB 설계 문서 작성 완료** — `docs/DB_DESIGN_DRAFT.md`
-- **Q1~Q7 설계 결정 완료** (2026-08-22) — 설계문서 11장
-  — Q5(기관별 단가 차등)는 실제 필요로 확인되어 Phase 2 → **Phase 1 승격**
-- **마이그레이션 SQL 작성 완료** — `supabase/migrations/` 7개 파일
-  — 테이블 15개 · 함수 10개 · RLS 정책 38개 · 인덱스 33개 · 상품 시드 24종
-  — ⚠️ **아직 실행하지 않음**
+- 카드 디자인 시안 일치 (PR #3~#6)
+  — `object-fit: contain` + 16:9 통일, 실버 배경 순백 정규화, 카드 높이 정렬
+- 계절 필터 버그 수정 (PR #7)
+  — `ScrollAnimation` 이 DOM 을 직접 조작해 `visible` 클래스가 리렌더링에 지워지던 문제
+
+**인프라 (PR #8, #14)**
+- Supabase URL 오타 수정 — `.env.local` + Vercel (PR #8)
+  — `constants/index.ts` 의 Storage URL 하드코딩도 함께 제거
+- Windows `.next` 파일 잠금(-4094) 근본 대응 (PR #14)
+  — dev distDir 분리 + webpack 디스크캐시 비활성화 + `npm run dev:clean`
+
+**DB (PR #10 ~ #12)**
+- DB 설계 문서 — `docs/DB_DESIGN_DRAFT.md`
+- Q1~Q7 설계 결정 완료 — Q5(기관별 단가)는 Phase 2 → **Phase 1 승격**
+- 마이그레이션 SQL 작성 (PR #10) + Storage 정책 수정 (PR #11)
+- **마이그레이션 실행 완료** ✅
+  — 테이블 15 · 함수 10 · RLS 정책 38 · 인덱스 33
+  — 버킷 2개 (`media` public / `materials` private) + Storage 정책 8개
+  — 상품 시드 24종 (키즈 12 / 실버 12)
+  — ⚠️ 버킷은 SQL 로 생성 불가라 대시보드에서 수동 생성함 (`MIGRATION_GUIDE` 3-A)
+- 최초 관리자 계정 등록 완료 (`super_admin`)
+
+**관리자 화면 (PR #13)**
+- 관리자 로그인 `/admin/login` — 비관리자·비활성 계정 즉시 로그아웃
+- `/admin/*` deny-by-default 보호 + 라우트 그룹 `(protected)` 로 가드 분리
+- 사이드바 레이아웃 (주문·문의는 "준비중" 비활성 표시)
+- 기관 승인 화면 `/admin/institutions`
+  — 서버 사이드 페이지네이션(20건/페이지) · 검색(기관명/사업자번호/담당자)
+  — 상태 필터 + 건수 · 정렬(가입일·기관명 양방향) · 빈 상태 2종
+  — 상세 화면 + 승인/반려(사유 필수)/검토중/정지/정지해제
+  — 상태 변경은 서버 액션 + `service_role` (REVOKE 때문에 클라이언트 UPDATE 불가)
+  — 변경 시 `audit_logs` 에 before/after 기록
+
+**동작 검증 완료** (2026-08-22)
+- 관리자 로그인 성공
+- 기관 목록 25건, 필터 건수 정확 (대기 9 / 검토 3 / 승인 9 / 반려 3 / 정지 1)
+- 상세 화면 정상, 사업자번호 중복 경고 동작
+- 승인 버튼 정상 — `service_role` 키 동작 확인
+- 승인일·승인자 자동 기록 확인
+- `audit_logs` 기록 확인 (`institution.approved`)
+
+> ⚠️ 위 25건은 `supabase/seeds/002_test_institutions.sql` 로 넣은 **테스트 데이터**다.
+> 실제 운영 시작 전에 반드시 지울 것:
+> ```sql
+> DELETE FROM institutions WHERE contact_email LIKE '%@test.icanmeal.local';
+> ```
 
 ### 🔄 진행 중
-- 없음 (SQL 실행 대기)
+
+- 없음
 
 ### 📋 다음 할 일 (우선순위 순)
-1. **마이그레이션 SQL 실행** ← 지금 여기
-   - ⚠️ 실행 전 대시보드에서 기존 테이블 유무 확인 (설계문서 0-4)
-   - 순서·검증쿼리·롤백은 `docs/MIGRATION_GUIDE.md` 참고
-2. 최초 관리자 계정 등록 (RLS 때문에 이거 없으면 아무 작업도 못 함)
-3. `types/index.ts` 를 실제 스키마에 맞게 갱신
-4. 기관 회원가입 · 승인 시스템 + 가입 폼 필드 보강 + 마이페이지
-   - 미들웨어 deny-by-default 전환도 여기서
-5. 상품 페이지를 DB 조회로 교체 (설계문서 7장, ISR 권장)
-6. 1:1 CS 게시판 (키즈밀 2패널 UI 패턴 재활용)
+
+1. **주문 관리 화면** (`/admin/orders`)
+   - 사이드바에 자리는 잡혀 있음 (현재 비활성)
+   - 목록/상세/상태 전이(접수→확인→배송준비→배송중→완료, 취소·반품)
+   - 기관 화면과 같은 패턴 재사용: 서버 페이지네이션·검색·필터·정렬
+   - 상태 변경은 동일하게 서버 액션 + `service_role` + `audit_logs`
+2. **문의 관리 화면** (`/admin/inquiries`) — 2패널 UI
+   - 왼쪽 스레드 목록 / 오른쪽 대화 (키즈밀 `board/customer` 패턴)
+   - 회원·비회원 통합 테이블이므로 한 화면에서 처리 (Q1 결정)
+   - `is_internal` 내부 메모는 기관에게 노출 금지 — RLS 로 이미 차단됨
+   - `unread_count_admin` / `last_message_at` 갱신 로직 필요
+3. **`institution_documents` 테이블 + 전용 버킷** (사업자등록증 첨부)
+   - 현재 `institutions` 스키마에 첨부 컬럼이 없어 상세 화면에 "미지원" 표시 중
+   - 새 마이그레이션 + private 버킷 (버킷은 대시보드 수동 생성)
+   - 승인 심사에 사실상 필수
+4. **기관 회원가입·로그인 실제 동작 연결**
+   - 현재 `app/auth/register` 는 화면만 있고 `setTimeout` 목업 상태
+   - 가입 폼 필드 보강 필요: 대표자명 · 배송지 5종 · 세금계산서 3종 · 동의시각 3종
+   - 가입 → `institutions` INSERT(`status='pending'`) → 승인 대기 안내
+   - 승인 상태별 리다이렉트 (pending/rejected/suspended 안내 페이지)
+5. `types/index.ts` 를 실제 스키마에 맞게 갱신 (현재 설계 이전 버전이라 컬럼이 다름)
+6. 상품 페이지를 DB 조회로 교체 (설계문서 7장, ISR 권장)
 7. 주문 흐름 — **반드시 `resolve_product_pricing()` 경유** (Q5 단가 로직 우회 금지)
 8. 결제 (토스페이먼츠)
 9. 영상 게이트 — `materials` private 버킷 + signed URL
-10. Resend 이메일 알림 + `email_logs`
+10. Resend 이메일 알림 + `email_logs` 기록
 11. 교안 자동화 (GitHub Actions + python-pptx)
-12. 기관별 단가 데이터 입력 (테이블은 준비 완료, 등급 체계 확정 후)
-13. 정기주문 / 관리자 ERP
+12. 기관별 단가 데이터 입력 (테이블 준비 완료, 등급 체계 확정 후)
+13. 정기주문 / 관리자 ERP 고도화
 
 ---
 
