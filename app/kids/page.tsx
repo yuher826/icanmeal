@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import ScrollAnimation from '@/components/ui/ScrollAnimation'
 import MonthlyKitGrid from '@/components/ui/MonthlyKitGrid'
-import { KIDS_PRODUCTS, KIDS_PROMISE } from '@/constants'
+import { KIDS_PRODUCTS, KIDS_PROMISE, BRAND_ASSETS, HERO_VIDEOS } from '@/constants'
 
 export const metadata: Metadata = {
   title: '키즈 쿠킹키트 | ICANMEAL',
@@ -39,7 +39,7 @@ export default function KidsPage() {
             <ScrollAnimation animation="right">
               <div style={{ aspectRatio: '4 / 3', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(201,87,42,0.18), 0 4px 20px rgba(0,0,0,0.10)' }}>
                 <video autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
-                  <source src="https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/kids/kids-hero.mp4" type="video/mp4" />
+                  <source src={HERO_VIDEOS.kids} type="video/mp4" />
                 </video>
               </div>
             </ScrollAnimation>
@@ -55,7 +55,11 @@ export default function KidsPage() {
           <ScrollAnimation animation="up">
             <div className="section-head">
               <span className="eyebrow">Kids ICANMEAL의 약속</span>
-              <h2>밥상머리 교육에서 시작된 키즈 라인 👦</h2>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                밥상머리 교육에서 시작된 키즈 라인
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={BRAND_ASSETS.mascotChef} alt="" aria-hidden="true" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+              </h2>
               <p>
                 단순한 요리 체험이 아니라, 함께 만들고 맛보며 대화하는 과정에서 가족의 소중함과 예절,
                 사회성을 자연스럽게 경험하도록 돕습니다.

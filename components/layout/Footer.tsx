@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { SITE_CONFIG, FOOTER_LINKS } from '@/constants'
+import { SITE_CONFIG, FOOTER_LINKS, BRAND_ASSETS } from '@/constants'
 
 const COLUMNS = [
   { title: 'BRAND',   links: FOOTER_LINKS.brand },
@@ -34,32 +34,15 @@ export default function Footer() {
           <div style={{ minWidth: 240, maxWidth: 340 }}>
             <div
               style={{
-                fontSize: 19,
-                fontWeight: 800,
-                color: '#fff',
                 marginBottom: 14,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 9,
               }}
             >
-              <span
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 8,
-                  background: 'var(--kids-coral-deep)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                  flexShrink: 0,
-                }}
-                aria-hidden="true"
-              >
-                👨‍🍳
-              </span>
-              ICANMEAL
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={BRAND_ASSETS.logoMark} alt="" aria-hidden="true" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+              <span style={{ fontSize: 19, fontWeight: 800, color: '#fff' }}>ICANMEAL</span>
             </div>
             <p style={{ fontSize: 13.5, lineHeight: 1.75 }}>
               만들고, 나누고, 기억에 남는 경험 — 아이와 어르신이 직접 만들고 함께 나누는 쿠킹클래스 키트 브랜드

@@ -8,6 +8,7 @@ import {
   KIDS_PRODUCTS,
   SILVER_PRODUCTS,
   FEATURED_MONTH,
+  HERO_VIDEOS,
 } from '@/constants'
 import ScrollAnimation from '@/components/ui/ScrollAnimation'
 import MonthlyKitCard from '@/components/ui/MonthlyKitCard'
@@ -103,8 +104,9 @@ export default function HomePage() {
                   boxShadow: '0 20px 50px rgba(46,37,31,0.14)',
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/hero-home.jpg" alt="아이캔밀 쿠킹키트로 요리하는 캐릭터들" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <video autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
+                  <source src={HERO_VIDEOS.home} type="video/mp4" />
+                </video>
               </div>
             </ScrollAnimation>
           </div>
