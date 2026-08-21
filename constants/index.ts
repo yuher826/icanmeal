@@ -25,6 +25,27 @@ export const SITE_CONFIG = {
 } as const
 
 /* ============================================================
+   BRAND ASSETS (로고 · 마스코트)
+   ============================================================ */
+export const BRAND_ASSETS = {
+  logoMark: '/images/brand/logo_mark.png',
+  logoWordmark: '/images/brand/logo_wordmark.png',
+  mascotChef: '/images/brand/mascot_chef.png',
+  mascotGroup: '/images/brand/mascot_group.png',
+  mascotLemon: '/images/brand/mascot_lemon.png',
+  mascotEgg: '/images/brand/mascot_egg.png',
+} as const
+
+/* ============================================================
+   HERO VIDEOS (Supabase Storage)
+   ============================================================ */
+export const HERO_VIDEOS = {
+  home: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/home_hero_opening.mp4',
+  kids: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/kids/kids_class.mp4',
+  silver: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/silver/silver_class.mp4',
+} as const
+
+/* ============================================================
    NAVIGATION  (ICANMEAL_몰_검수용_1.html 상단 GNB 기준)
    ============================================================ */
 export const NAV_ITEMS: NavItem[] = [
@@ -159,33 +180,33 @@ export interface MonthlyKit {
 }
 
 export const KIDS_PRODUCTS: MonthlyKit[] = [
-  { id: 'kids-01', line: 'kids', month: 1,  tagline: '복이 가득! 영양 가득!',   name: '만두 만들기',          desc: '기관 즉석취식 불가 · 별도 포장재로 가정에 배송', unit: '3개',        price: 5500, video: true, image: '/images/products/kids-01.jpg' },
-  { id: 'kids-02', line: 'kids', month: 2,  tagline: '새콤달콤!',              name: '딸기 쌀강정 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                      unit: '2개',        price: 4500, video: true, image: '/images/products/kids-02.jpg' },
-  { id: 'kids-03', line: 'kids', month: 3,  tagline: '알록달록 영양소 가득',    name: '꼬마김밥 만들기',      desc: '월간 정규 캘린더 쿠킹키트',                      unit: '3개',        price: 4500, video: true, image: '/images/products/kids-03.jpg' },
-  { id: 'kids-04', line: 'kids', month: 4,  tagline: '봄이 왔어요!',           name: '봄나비 부르게스타 만들기', desc: '월간 정규 캘린더 쿠킹키트',                   unit: '2개',        price: 4000, video: true, image: '/images/products/kids-04.jpg' },
-  { id: 'kids-05', line: 'kids', month: 5,  tagline: '새콤달콤',               name: '레몬청 만들기',        desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '150ml 내외', price: 4500, video: true, image: '/images/products/kids-05.jpg' },
-  { id: 'kids-06', line: 'kids', month: 6,  tagline: '포실포실',               name: '햇감자샌드위치 만들기', desc: '월간 정규 캘린더 쿠킹키트',                     unit: '2개',        price: 4000, video: true, image: '/images/products/kids-06.jpg' },
-  { id: 'kids-07', line: 'kids', month: 7,  tagline: '달콤한 여름 디저트!',     name: '미니컵 파르페 만들기',  desc: '월간 정규 캘린더 쿠킹키트',                     unit: '150g 내외',  price: 5500, video: true, image: '/images/products/kids-07.jpg' },
-  { id: 'kids-08', line: 'kids', month: 8,  tagline: '건강한 여름나기',         name: '참외컵화채 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                     unit: '150ml 내외', price: 4500, video: true, image: '/images/products/kids-08.jpg' },
-  { id: 'kids-09', line: 'kids', month: 9,  tagline: '추석맞이!',              name: '한가위 송편 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                     unit: '3개',        price: 5000, video: true, image: '/images/products/kids-09.jpg' },
-  { id: 'kids-10', line: 'kids', month: 10, tagline: '한국음식의 뿌리',         name: '전통 된장 만들기',      desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '150g 내외',  price: 5500, video: true, image: '/images/products/kids-10.jpg' },
-  { id: 'kids-11', line: 'kids', month: 11, tagline: '유산균이 톡톡!',          name: '김장 김치 만들기',      desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '600g 내외',  price: 6000, video: true, image: '/images/products/kids-11.jpg' },
-  { id: 'kids-12', line: 'kids', month: 12, tagline: '빛나는 코!',             name: '루돌프 컵케이크 만들기', desc: '월간 정규 캘린더 쿠킹키트',                    unit: '1개',        price: 4500, video: true, image: '/images/products/kids-12.jpg' },
+  { id: 'kids-01', line: 'kids', month: 1,  tagline: '복이 가득! 영양 가득!',   name: '만두 만들기',          desc: '기관 즉석취식 불가 · 별도 포장재로 가정에 배송', unit: '3개',        price: 5500, video: true, image: '/images/products/kids/kids_01_만두.png' },
+  { id: 'kids-02', line: 'kids', month: 2,  tagline: '새콤달콤!',              name: '딸기 쌀강정 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                      unit: '2개',        price: 4500, video: true, image: '/images/products/kids/kids_02_딸기쌀강정.png' },
+  { id: 'kids-03', line: 'kids', month: 3,  tagline: '알록달록 영양소 가득',    name: '꼬마김밥 만들기',      desc: '월간 정규 캘린더 쿠킹키트',                      unit: '3개',        price: 4500, video: true, image: '/images/products/kids/kids_03_꼬마김밥.png' },
+  { id: 'kids-04', line: 'kids', month: 4,  tagline: '봄이 왔어요!',           name: '봄나비 부르게스타 만들기', desc: '월간 정규 캘린더 쿠킹키트',                   unit: '2개',        price: 4000, video: true, image: '/images/products/kids/kids_04_봄나비부르게스타.png' },
+  { id: 'kids-05', line: 'kids', month: 5,  tagline: '새콤달콤',               name: '레몬청 만들기',        desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '150ml 내외', price: 4500, video: true, image: '/images/products/kids/kids_05_레몬청.png' },
+  { id: 'kids-06', line: 'kids', month: 6,  tagline: '포실포실',               name: '햇감자샌드위치 만들기', desc: '월간 정규 캘린더 쿠킹키트',                     unit: '2개',        price: 4000, video: true, image: '/images/products/kids/kids_06_햇감자샌드위치.png' },
+  { id: 'kids-07', line: 'kids', month: 7,  tagline: '달콤한 여름 디저트!',     name: '미니컵 파르페 만들기',  desc: '월간 정규 캘린더 쿠킹키트',                     unit: '150g 내외',  price: 5500, video: true, image: '/images/products/kids/kids_07_미니컵파르페.png' },
+  { id: 'kids-08', line: 'kids', month: 8,  tagline: '건강한 여름나기',         name: '참외컵화채 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                     unit: '150ml 내외', price: 4500, video: true, image: '/images/products/kids/kids_08_참외컵화채.png' },
+  { id: 'kids-09', line: 'kids', month: 9,  tagline: '추석맞이!',              name: '한가위 송편 만들기',    desc: '월간 정규 캘린더 쿠킹키트',                     unit: '3개',        price: 5000, video: true, image: '/images/products/kids/kids_09_한가위송편.png' },
+  { id: 'kids-10', line: 'kids', month: 10, tagline: '한국음식의 뿌리',         name: '전통 된장 만들기',      desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '150g 내외',  price: 5500, video: true, image: '/images/products/kids/kids_10_전통된장.png' },
+  { id: 'kids-11', line: 'kids', month: 11, tagline: '유산균이 톡톡!',          name: '김장 김치 만들기',      desc: '기관 즉석취식 불가 · 보관용기로 가정에 배송',    unit: '600g 내외',  price: 6000, video: true, image: '/images/products/kids/kids_11_김장김치.png' },
+  { id: 'kids-12', line: 'kids', month: 12, tagline: '빛나는 코!',             name: '루돌프 컵케이크 만들기', desc: '월간 정규 캘린더 쿠킹키트',                    unit: '1개',        price: 4500, video: true, image: '/images/products/kids/kids_12_루돌프컵케이크.png' },
 ]
 
 export const SILVER_PRODUCTS: MonthlyKit[] = [
-  { id: 'silver-01', line: 'silver', month: 1,  tagline: '온가족이 둘러앉아 빚던 만두!',                 name: '떡만둣국 만들기',       desc: '온가족이 둘러앉아 만두 빚던 기억을 함께 나누는 회상 활동입니다.',       price: 5500, video: true, image: '/images/products/silver-01.jpg' },
-  { id: 'silver-02', line: 'silver', month: 2,  tagline: '고운 색동저고리 입던 날의 설렘',                name: '월남떡쌈 만들기',       desc: '색동저고리 입고 설레던 날을 함께 나누는 회상 활동입니다.',              price: 4000, video: true, image: '/images/products/silver-02.jpg' },
-  { id: 'silver-03', line: 'silver', month: 3,  tagline: '꽃구경 가던 봄날의 기억',                       name: '화전 만들기',           desc: '꽃구경 가던 봄날의 기억을 함께 나누는 회상 활동입니다.',                price: 4500, video: true, image: '/images/products/silver-03.jpg' },
-  { id: 'silver-04', line: 'silver', month: 4,  tagline: '그 시절 흙내음 대신 달콤함 심는 날',             name: '식목일 텃밭케이크 만들기', desc: '흙내음 대신 달콤함을 심던 식목일을 함께 나누는 회상 활동입니다.',     price: 4500, video: true, image: '/images/products/silver-04.jpg' },
-  { id: 'silver-05', line: 'silver', month: 5,  tagline: '계란이 왔어요~ 맛있는 계란장이 왔어요!',         name: '계란장 만들기',         desc: '계란장 나누어 먹던 기억을 함께 나누는 회상 활동입니다.',                price: 5000, video: true, image: '/images/products/silver-05.jpg' },
-  { id: 'silver-06', line: 'silver', month: 6,  tagline: '뉘 집 감자여~?',                                name: '감자사라다빵 만들기',    desc: '동네에서 감자 나눠 먹던 기억을 함께 나누는 회상 활동입니다.',           price: 4000, video: true, image: '/images/products/silver-06.jpg' },
-  { id: 'silver-07', line: 'silver', month: 7,  tagline: '정겨운 여름 손맛',                              name: '열무김치 만들기',       desc: '여름철 열무김치 담그던 손맛을 함께 나누는 회상 활동입니다.',            price: 5000, video: true, image: '/images/products/silver-07.jpg' },
-  { id: 'silver-08', line: 'silver', month: 8,  tagline: '매미 울던 여름날',                              name: '수박 화채 만들기',      desc: '매미 울던 여름날의 시원함을 함께 나누는 회상 활동입니다.',              price: 4500, video: true, image: '/images/products/silver-08.jpg' },
-  { id: 'silver-09', line: 'silver', month: 9,  tagline: '한가위 달빛 아래 가족들과 만들었던!',            name: '송편 만들기',           desc: '한가위 달빛 아래 온가족이 빚던 송편을 함께 나누는 회상 활동입니다.',     price: 4000, video: true, image: '/images/products/silver-09.jpg' },
-  { id: 'silver-10', line: 'silver', month: 10, tagline: '무병장수 기원, 약(藥)이 되는 귀한',              name: '약밥 만들기',           desc: '무병장수를 기원하며 나누던 약밥을 함께 나누는 회상 활동입니다.',        price: 4500, video: true, image: '/images/products/silver-10.jpg' },
-  { id: 'silver-11', line: 'silver', month: 11, tagline: '수확의 기쁨!',                                  name: '튀밥 과즐 만들기',      desc: '수확의 기쁨을 나누던 튀밥 과즐을 함께 나누는 회상 활동입니다.',         price: 4000, video: true, image: '/images/products/silver-11.jpg' },
-  { id: 'silver-12', line: 'silver', month: 12, tagline: '할머니·할아버지가 구운 달콤한 크리스마스의 기적', name: '크리스마스쿠키 만들기', desc: '손주에게 전하는 달콤한 크리스마스를 함께 나누는 회상 활동입니다.',      price: 5500, video: true, image: '/images/products/silver-12.jpg' },
+  { id: 'silver-01', line: 'silver', month: 1,  tagline: '온가족이 둘러앉아 빚던 만두!',                 name: '떡만둣국 만들기',       desc: '온가족이 둘러앉아 만두 빚던 기억을 함께 나누는 회상 활동입니다.',       price: 5500, video: true, image: '/images/products/silver_illustration/silver_illust_01_떡만둣국.png' },
+  { id: 'silver-02', line: 'silver', month: 2,  tagline: '고운 색동저고리 입던 날의 설렘',                name: '월남떡쌈 만들기',       desc: '색동저고리 입고 설레던 날을 함께 나누는 회상 활동입니다.',              price: 4000, video: true, image: '/images/products/silver_illustration/silver_illust_02_월남떡쌈.png' },
+  { id: 'silver-03', line: 'silver', month: 3,  tagline: '꽃구경 가던 봄날의 기억',                       name: '화전 만들기',           desc: '꽃구경 가던 봄날의 기억을 함께 나누는 회상 활동입니다.',                price: 4500, video: true, image: '/images/products/silver_illustration/silver_illust_03_화전.png' },
+  { id: 'silver-04', line: 'silver', month: 4,  tagline: '그 시절 흙내음 대신 달콤함 심는 날',             name: '식목일 텃밭케이크 만들기', desc: '흙내음 대신 달콤함을 심던 식목일을 함께 나누는 회상 활동입니다.',     price: 4500, video: true, image: '/images/products/silver_illustration/silver_illust_04_식목일텃밭케이크.png' },
+  { id: 'silver-05', line: 'silver', month: 5,  tagline: '계란이 왔어요~ 맛있는 계란장이 왔어요!',         name: '계란장 만들기',         desc: '계란장 나누어 먹던 기억을 함께 나누는 회상 활동입니다.',                price: 5000, video: true, image: '/images/products/silver_illustration/silver_illust_05_계란장.png' },
+  { id: 'silver-06', line: 'silver', month: 6,  tagline: '뉘 집 감자여~?',                                name: '감자사라다빵 만들기',    desc: '동네에서 감자 나눠 먹던 기억을 함께 나누는 회상 활동입니다.',           price: 4000, video: true, image: '/images/products/silver_illustration/silver_illust_06_감자사라다빵.png' },
+  { id: 'silver-07', line: 'silver', month: 7,  tagline: '정겨운 여름 손맛',                              name: '열무김치 만들기',       desc: '여름철 열무김치 담그던 손맛을 함께 나누는 회상 활동입니다.',            price: 5000, video: true, image: '/images/products/silver_illustration/silver_illust_07_열무김치.png' },
+  { id: 'silver-08', line: 'silver', month: 8,  tagline: '매미 울던 여름날',                              name: '수박 화채 만들기',      desc: '매미 울던 여름날의 시원함을 함께 나누는 회상 활동입니다.',              price: 4500, video: true, image: '/images/products/silver_illustration/silver_illust_08_수박화채.png' },
+  { id: 'silver-09', line: 'silver', month: 9,  tagline: '한가위 달빛 아래 가족들과 만들었던!',            name: '송편 만들기',           desc: '한가위 달빛 아래 온가족이 빚던 송편을 함께 나누는 회상 활동입니다.',     price: 4000, video: true, image: '/images/products/silver_illustration/silver_illust_09_송편.png' },
+  { id: 'silver-10', line: 'silver', month: 10, tagline: '무병장수 기원, 약(藥)이 되는 귀한',              name: '약밥 만들기',           desc: '무병장수를 기원하며 나누던 약밥을 함께 나누는 회상 활동입니다.',        price: 4500, video: true, image: '/images/products/silver_illustration/silver_illust_10_약밥.png' },
+  { id: 'silver-11', line: 'silver', month: 11, tagline: '수확의 기쁨!',                                  name: '튀밥 과즐 만들기',      desc: '수확의 기쁨을 나누던 튀밥 과즐을 함께 나누는 회상 활동입니다.',         price: 4000, video: true, image: '/images/products/silver_illustration/silver_illust_11_튀밥과즐.png' },
+  { id: 'silver-12', line: 'silver', month: 12, tagline: '할머니·할아버지가 구운 달콤한 크리스마스의 기적', name: '크리스마스쿠키 만들기', desc: '손주에게 전하는 달콤한 크리스마스를 함께 나누는 회상 활동입니다.',      price: 5500, video: true, image: '/images/products/silver_illustration/silver_illust_12_크리스마스쿠키.png' },
 ]
 
 /** 홈 "이번 달 추천 쿠킹키트" 섹션에 노출할 기준 월 (시안 기준 8월 고정) */
@@ -222,17 +243,16 @@ export const INSTITUTION_FEATURES = [
 ]
 
 /* ============================================================
-   HOME / GUIDE — 활동 사례 갤러리 (8종, 시안 기준)
+   HOME / GUIDE — 활동 사례 갤러리 (실제 기관 수업·완성작 사진)
    ============================================================ */
 export const CASE_ITEMS = [
-  { label: '만두 만들기',          image: '/images/products/kids-01.jpg' },
-  { label: '꼬마김밥 만들기',      image: '/images/products/kids-03.jpg' },
-  { label: '미니컵 파르페 만들기', image: '/images/products/kids-07.jpg' },
-  { label: '루돌프 컵케이크 만들기', image: '/images/products/kids-12.jpg' },
-  { label: '월남떡쌈 만들기',      image: '/images/products/silver-02.jpg' },
-  { label: '화전 만들기',          image: '/images/products/silver-03.jpg' },
-  { label: '수박 화채 만들기',     image: '/images/products/silver-08.jpg' },
-  { label: '크리스마스쿠키 만들기', image: '/images/products/silver-12.jpg' },
+  { label: '만두 만들기 수업 현장',    image: '/images/cases/만두_수업현장.jpg' },
+  { label: '만두 만들기 완성',        image: '/images/cases/만두_완성.jpg' },
+  { label: '꼬마김밥 만들기 완성',    image: '/images/cases/꼬마김밥_완성.jpg' },
+  { label: '미니컵 파르페 만들기 완성', image: '/images/cases/미니컵파르페_완성.jpg' },
+  { label: '월남떡쌈 만들기 완성',    image: '/images/cases/월남떡쌈_완성.jpg' },
+  { label: '튀밥 과즐 만들기 완성',   image: '/images/cases/튀밥과즐_완성.jpg' },
+  { label: '타르트 만들기 수업 현장', image: '/images/cases/타르트_수업현장.jpg' },
 ]
 
 /* ============================================================

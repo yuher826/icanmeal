@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import ScrollAnimation from '@/components/ui/ScrollAnimation'
 import MonthlyKitGrid from '@/components/ui/MonthlyKitGrid'
-import { SILVER_PRODUCTS, SILVER_CORE_VALUES } from '@/constants'
+import { SILVER_PRODUCTS, SILVER_CORE_VALUES, HERO_VIDEOS } from '@/constants'
 
 export const metadata: Metadata = {
   title: '실버 쿠킹키트 | ICANMEAL',
@@ -40,8 +40,9 @@ export default function SilverPage() {
 
             <ScrollAnimation animation="right">
               <div style={{ aspectRatio: '4 / 3', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(111,84,153,0.18), 0 4px 20px rgba(0,0,0,0.10)' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/hero-silver.jpg" alt="어르신들이 함께 요리하는 모습" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <video autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
+                  <source src={HERO_VIDEOS.silver} type="video/mp4" />
+                </video>
               </div>
             </ScrollAnimation>
           </div>

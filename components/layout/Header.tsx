@@ -3,29 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { NAV_ITEMS } from '@/constants'
-
-/* 로고마크 — 오렌지 셰프 모자 캐릭터 뱃지 */
-function LogoMark() {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        width: 30,
-        height: 30,
-        borderRadius: 10,
-        background: 'var(--kids-coral-deep)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 15,
-        flexShrink: 0,
-      }}
-    >
-      👨‍🍳
-    </span>
-  )
-}
+import { NAV_ITEMS, BRAND_ASSETS } from '@/constants'
 
 export default function Header() {
   const pathname = usePathname()
@@ -88,18 +66,10 @@ export default function Header() {
               marginRight: 8,
             }}
           >
-            <LogoMark />
-            <span
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                letterSpacing: '0.01em',
-                color: 'var(--kids-coral-deep)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              I CAN MEAL
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={BRAND_ASSETS.logoMark} alt="" aria-hidden="true" style={{ width: 30, height: 30, objectFit: 'contain' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={BRAND_ASSETS.logoWordmark} alt="I CAN MEAL" style={{ height: 15, objectFit: 'contain' }} />
           </Link>
 
           {/* ── 데스크톱 네비 ── */}
