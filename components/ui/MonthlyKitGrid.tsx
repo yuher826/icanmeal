@@ -9,11 +9,9 @@ const SEASON_TABS: (Season | 'all')[] = ['all', 'spring', 'summer', 'fall', 'win
 
 interface Props {
   products: MonthlyKit[]
-  /** 카드 이미지 컨테이너 종횡비. 키즈(16:9)와 실버(1:1)가 다름 */
-  aspect?: string
 }
 
-export default function MonthlyKitGrid({ products, aspect }: Props) {
+export default function MonthlyKitGrid({ products }: Props) {
   const [season, setSeason] = useState<Season | 'all'>('all')
 
   const filtered = useMemo(
@@ -38,7 +36,7 @@ export default function MonthlyKitGrid({ products, aspect }: Props) {
       <div className="product-grid">
         {filtered.map((p, i) => (
           <ScrollAnimation key={p.id} animation="up" delay={(i % 3) * 100}>
-            <MonthlyKitCard kit={p} aspect={aspect} />
+            <MonthlyKitCard kit={p} />
           </ScrollAnimation>
         ))}
       </div>
