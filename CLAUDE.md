@@ -36,7 +36,9 @@
 | 파일 | 내용 | git |
 |------|------|-----|
 | `CLAUDE.md` | 개발 규칙·진행상황 (이 문서) | ✅ 커밋 |
-| `docs/DB_DESIGN_DRAFT.md` | DB 설계 초안 (테이블·RLS·구현순서) | ✅ 커밋 |
+| `docs/DB_DESIGN_DRAFT.md` | DB 설계 (테이블·RLS·결정사항 Q1~Q7) | ✅ 커밋 |
+| `docs/MIGRATION_GUIDE.md` | 마이그레이션 실행 순서·검증·롤백 | ✅ 커밋 |
+| `supabase/migrations/` | 실제 스키마 SQL (법인 분리 원칙 2) | ✅ 커밋 |
 | `docs/BUSINESS.md` | 사업·행정·세무 | ❌ 미커밋 (로컬 전용) |
 
 ---
@@ -137,25 +139,32 @@ public/images/
 - **Supabase URL 오타 수정 완료** (PR #8) — `.env.local` + Vercel 환경변수
   — 더불어 `constants/index.ts` 의 Storage URL 하드코딩 제거
 - **DB 설계 문서 작성 완료** — `docs/DB_DESIGN_DRAFT.md`
-  — 테이블 10개 + Phase 2 대비 9개, RLS 초안, 법인분리 자체점검, 구현순서
+- **Q1~Q7 설계 결정 완료** (2026-08-22) — 설계문서 11장
+  — Q5(기관별 단가 차등)는 실제 필요로 확인되어 Phase 2 → **Phase 1 승격**
+- **마이그레이션 SQL 작성 완료** — `supabase/migrations/` 7개 파일
+  — 테이블 15개 · 함수 10개 · RLS 정책 38개 · 인덱스 33개 · 상품 시드 24종
+  — ⚠️ **아직 실행하지 않음**
 
 ### 🔄 진행 중
-- 없음 (다음 단계 결정 대기)
+- 없음 (SQL 실행 대기)
 
 ### 📋 다음 할 일 (우선순위 순)
-1. **`docs/DB_DESIGN_DRAFT.md` 의 Q1~Q7 결정** ← 지금 여기
-2. 결정 반영해 **마이그레이션 SQL 작성** (`supabase/migrations/`)
-   - 1차: 공통 기반(헬퍼 함수·admins·audit_logs) + institutions + products
-   - ⚠️ 실행 전 대시보드에서 기존 테이블 유무 확인 (문서 0-4)
-3. 기관 회원가입 · 승인 시스템 + 마이페이지
-4. 상품 데이터 이관 (`constants/index.ts` → DB, 문서 7장)
-5. 1:1 CS 게시판 (키즈밀 2패널 UI 패턴 재활용)
-6. 주문 + 결제 (토스페이먼츠)
-7. 영상 게이트 (주문 완료 기관만 접근) — Q2 결정 선행 필요
-8. Resend 이메일 알림 + `email_logs`
-9. 교안 자동화 (GitHub Actions + python-pptx)
-10. 정기주문
-11. 관리자 ERP
+1. **마이그레이션 SQL 실행** ← 지금 여기
+   - ⚠️ 실행 전 대시보드에서 기존 테이블 유무 확인 (설계문서 0-4)
+   - 순서·검증쿼리·롤백은 `docs/MIGRATION_GUIDE.md` 참고
+2. 최초 관리자 계정 등록 (RLS 때문에 이거 없으면 아무 작업도 못 함)
+3. `types/index.ts` 를 실제 스키마에 맞게 갱신
+4. 기관 회원가입 · 승인 시스템 + 가입 폼 필드 보강 + 마이페이지
+   - 미들웨어 deny-by-default 전환도 여기서
+5. 상품 페이지를 DB 조회로 교체 (설계문서 7장, ISR 권장)
+6. 1:1 CS 게시판 (키즈밀 2패널 UI 패턴 재활용)
+7. 주문 흐름 — **반드시 `resolve_product_pricing()` 경유** (Q5 단가 로직 우회 금지)
+8. 결제 (토스페이먼츠)
+9. 영상 게이트 — `materials` private 버킷 + signed URL
+10. Resend 이메일 알림 + `email_logs`
+11. 교안 자동화 (GitHub Actions + python-pptx)
+12. 기관별 단가 데이터 입력 (테이블은 준비 완료, 등급 체계 확정 후)
+13. 정기주문 / 관리자 ERP
 
 ---
 

@@ -37,3 +37,7 @@ next-env.d.ts
 
 # 사업·행정 문서 (세무·비용·명의 — 로컬 전용)
 docs/BUSINESS.md
+
+# 디자인 검수용 원본 HTML (대용량 참조 파일, 합계 약 4.3MB)
+ICANMEAL_몰_검수용_1.html
+icanmeal_site.html
