@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 사업·행정 문서 (세무·비용·명의 — 로컬 전용)
+docs/BUSINESS.md
