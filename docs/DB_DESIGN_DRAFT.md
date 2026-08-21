@@ -1,9 +1,28 @@
-# 아이캔밀 DB 설계 초안 (DB_DESIGN_DRAFT)
+# 아이캔밀 DB 설계 (DB_DESIGN_DRAFT)
 
-작성일: 2026-08-21 · 상태: **초안 — 승인 전, SQL 미실행**
+작성일: 2026-08-21 · 갱신: 2026-08-22
+상태: **Q1~Q7 결정 완료 → 마이그레이션 SQL 작성 완료 (아직 미실행)**
 
-이 문서는 설계안일 뿐이다. 이 문서 기준으로 승인이 나면
-`supabase/migrations/` 에 SQL 파일을 만들고 그때 적용한다.
+| | |
+|---|---|
+| 설계 근거 | 이 문서 |
+| 실제 SQL | `supabase/migrations/2026082200*.sql` |
+| 실행 절차·롤백 | `docs/MIGRATION_GUIDE.md` |
+
+> ⚠️ SQL 은 **작성만** 되어 있고 실행하지 않았다.
+> 실행 전 대시보드에서 기존 테이블 유무를 반드시 확인할 것 (0-4 / 실행 가이드 0장).
+
+## 결정 사항 요약 (2026-08-22 확정)
+
+| Q | 결정 | 이 문서 반영 |
+|---|---|---|
+| Q1 문의 통합 | **회원/비회원 한 테이블** | 4-7 |
+| Q2 영상 게이트 | **히어로 public 유지 + `materials` private 신설** | 6-3, 0-5 |
+| Q3 사업자번호 | **UNIQUE 안 걸기** (분원 각각 가입) | 4-2 |
+| Q4 민감컬럼 | **`REVOKE UPDATE` 방식** | 6-3 ① |
+| Q5 기관별 단가 | **차등 있음 — Phase 1 으로 승격** ★ | 4-3b (신설) |
+| Q6 최소주문/리드타임 | **전역 기본값 + 상품별 예외** | 4-3, 4-0 |
+| Q7 URL 오타 | 처리 완료 | 0-1 |
 
 > **조사 범위 고지**
 > `kizmeal-renewal` 은 **읽기 전용**으로만 열람했다 (Read / Glob / Grep).
@@ -178,18 +197,22 @@ DB 설계(RLS)만으로는 해결되지 않는 문제라 별도 결정이 필요
               │      │  shipments   │         ┌─────────▼──────────┐
               │      │   (배송)      │         │     products       │
               │      └──────────────┘         │   (12개월 x 2라인)   │
-              │                               └─────────┬──────────┘
-              │                                         │ 1:N
-      ┌───────▼──────┐   ┌──────────────┐     ┌─────────▼──────────┐
-      │  audit_logs  │   │  email_logs  │     │ product_materials  │
-      │ (활동 추적)    │   │ (발송 이력)   │     │ (교안·활동지·영상)   │
-      └──────────────┘   └──────────────┘     └────────────────────┘
+              │                               └──┬──────────────┬──┘
+              │                            1:N   │              │  1:N
+      ┌───────▼──────┐   ┌──────────────┐  ┌─────▼──────────┐ ┌─▼──────────────────┐
+      │  audit_logs  │   │  email_logs  │  │ product_prices │ │ product_materials  │
+      │ (활동 추적)    │   │ (발송 이력)   │  │ 기관별 단가 ★Q5 │ │ (교안·활동지·영상)   │
+      └──────────────┘   └──────────────┘  └─────┬──────────┘ └────────────────────┘
+                                                 │ N:1 (institution_id, nullable)
+                                                 └──────────▶ institutions
 
-      ┌──────────────────────┐
-      │ order_number_counters│  주문번호 원자적 채번용 (관계 없음)
-      └──────────────────────┘
+      ┌──────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐
+      │ order_number_counters│  │inquiry_number_counters│  │  app_settings   │
+      │  주문번호 원자적 채번   │  │   문의번호 채번         │  │ 전역 기본값(단일행)│
+      └──────────────────────┘  └───────────────────────┘  └─────────────────┘
 
   [P2] = Phase 2 (지금은 안 만듦, 컬럼/함수만 대비)
+  ★Q5 = 이번 결정으로 Phase 2 → Phase 1 승격
 ```
 
 **관계 요약**
@@ -199,8 +222,27 @@ DB 설계(RLS)만으로는 해결되지 않는 문제라 별도 결정이 필요
 - `orders 1 : N shipments` — **분원 다중 배송 대비** (v1은 실질 1:1)
 - `products 1 : N order_items` — `ON DELETE RESTRICT` (상품 하드삭제 금지)
 - `products 1 : N product_materials` — 교안/활동지/PPT/영상
+- **`products 1 : N product_prices`** — 등급가 또는 기관 전용가 (★Q5)
+- **`institutions 0..1 : N product_prices`** — 기관 전용가일 때만 연결
 - `inquiries 1 : N inquiry_messages`
 - `institutions 0..1 : N inquiries` — **NULL 이면 비회원 문의**
+
+### 가격 결정 흐름 (★Q5)
+
+```
+주문서에서 단가를 구할 때 — resolve_product_price(product_id, institution_id)
+
+  ① product_prices 에 이 기관 전용가가 있나?  ──있음──▶ 그 값 사용
+        │ 없음
+        ▼
+  ② product_prices 에 이 기관 등급(price_tier)의 가격이 있나? ──있음──▶ 그 값 사용
+        │ 없음
+        ▼
+  ③ products.price (기본가) 사용
+
+  → product_prices 가 비어 있어도 ③ 으로 폴백하므로 지금 당장 정상 동작한다.
+    나중에 데이터만 넣으면 주문 로직 수정 없이 차등가가 적용된다.
+```
 
 ---
 
@@ -369,6 +411,81 @@ DB 설계(RLS)만으로는 해결되지 않는 문제라 별도 결정이 필요
 **⚠️ 알레르기 배열 vs 별도 테이블 (⭐ 판단)**
 `TEXT[]` + GIN 인덱스 채택. 14개 고정 코드라 조인 테이블의 이득이 없고,
 `allergens @> '{egg}'` 로 필터가 충분히 빠르다. `types/index.ts` 의 `Allergen` 유니온과도 맞는다.
+
+**Q6 반영 — 최소주문/리드타임은 NULL 이 기본**
+`min_order_qty` / `lead_time_days` 를 `NULL` 로 두면 `app_settings` 의 전역값
+(30세트 / 10영업일)이 적용된다. 특정 상품만 예외를 두고 싶을 때 그 행에만 값을 넣는다.
+조회는 `resolve_product_pricing()` 이 `COALESCE(상품값, 전역값)` 으로 처리한다.
+
+---
+
+### 4-3b. `product_prices` — 🔵 새로 만듦 ★Q5 (Phase 2 → Phase 1 승격)
+
+> **결정 변경 기록**: 초판에서는 "기관별 단가 차등"을 `institutions.price_tier` 컬럼만
+> 두고 Phase 2 로 미뤘다. 허이사님 확인 결과 **실제로 필요한 기능**으로 확정되어
+> 테이블과 조회 로직을 **이번 마이그레이션에 포함**한다.
+> 데이터는 비워둔 채 시작하고, 나중에 행만 넣으면 동작한다.
+
+| 컬럼 | 타입 | NULL | 기본값 | 설명 |
+|---|---|---|---|---|
+| `id` | UUID | N | `gen_random_uuid()` | PK |
+| `product_id` | UUID | N | — | `products(id)` `ON DELETE CASCADE` |
+| `price_tier` | TEXT | Y | — | 등급가. `standard`/`preferred`/`partner` |
+| `institution_id` | UUID | Y | — | 기관 전용가. `institutions(id)` `ON DELETE CASCADE` |
+| `price` | INT | N | — | 단가(원, VAT 별도) |
+| `valid_from` | DATE | Y | — | NULL = 과거부터 유효 |
+| `valid_until` | DATE | Y | — | NULL = 무기한 |
+| `memo` | TEXT | Y | — | "2026 연간계약가" 등 |
+| `created_by` | UUID | Y | — | `admins(id)` |
+| `created_at` / `updated_at` | TIMESTAMPTZ | N | `NOW()` | |
+
+**핵심 제약 — 등급가 XOR 기관전용가**
+
+```sql
+CONSTRAINT product_prices_target_check CHECK (
+  (price_tier IS NOT NULL AND institution_id IS NULL)
+  OR (price_tier IS NULL AND institution_id IS NOT NULL)
+)
+```
+
+한 행은 **등급가이거나 기관전용가이지, 둘 다일 수 없다.** 이 제약이 없으면
+"등급도 지정됐고 기관도 지정된" 행이 생겨 우선순위 판정이 모호해진다.
+
+**왜 `products` 에 컬럼을 더하지 않고 별도 테이블인가 (⭐ 판단)**
+
+| 방식 | 문제 |
+|---|---|
+| `products.price_preferred`, `price_partner` … 컬럼 추가 | 등급이 늘 때마다 **스키마 변경**. 기관 전용가는 아예 불가능 |
+| 기관마다 상품 복제 | 24종 × 기관 수. 관리 불가 |
+| **별도 `product_prices` 테이블** | 등급 추가·기관 전용가·유효기간 전부 데이터로 처리 ✅ |
+
+**유효기간을 왜 넣나**
+"3월부터 단가 인상" 같은 요구가 반드시 온다. 유효기간이 없으면
+그날 수동으로 UPDATE 해야 하고, 과거 시점 가격을 재현할 수 없다.
+
+**주문 시 스냅샷과의 관계**
+`order_items.unit_price_snapshot` 에는 `resolve_product_price()` 결과(그 기관 실제 단가)를,
+`base_price_snapshot` 에는 당시 정가를 넣는다. 두 값을 함께 남겨야
+나중에 "이 기관에 얼마나 할인해줬나" 를 추적할 수 있다.
+
+---
+
+### 4-3c. `app_settings` — 🔵 새로 만듦 (Q6)
+
+전역 운영 기본값을 담는 **단일 행** 테이블.
+
+| 컬럼 | 타입 | 기본값 | 설명 |
+|---|---|---|---|
+| `id` | BOOLEAN | `TRUE` | PK. `CHECK (id = TRUE)` 로 단일 행 강제 |
+| `default_min_order_qty` | INT | `30` | 기본 최소 주문 세트 (시안 기준) |
+| `default_lead_time_days` | INT | `10` | 기본 리드타임 (영업일) |
+| `free_shipping_threshold` | INT | `200000` | 무료배송 기준액 |
+| `default_shipping_fee` | INT | `3000` | 기본 배송비 |
+| `vat_rate` | NUMERIC(5,4) | `0.10` | 부가세율 |
+| `price_includes_vat` | BOOLEAN | `FALSE` | 상품가가 VAT **별도**임을 명시 |
+
+단일 행 강제는 `id BOOLEAN PRIMARY KEY CHECK (id = TRUE)` 관용구를 쓴다.
+행이 여러 개 생겨 "어느 게 진짜 설정인가" 를 고민하는 사고를 원천 차단한다.
 
 ---
 
@@ -664,7 +781,33 @@ RETURNING last_seq;
 | `payments` | 부분환불/재시도 늘어날 때 | `orders` 의 결제 컬럼들 → 이관 |
 | `returns` | 반품 프로세스 정식화 | `orders.status='returned'` |
 | `notices` | 기관 공지 | 없음 |
-| `product_access_grants` | 수동 영상 권한 부여 | 6-3 참고 |
+| `product_access_grants` | 수동 영상 권한 부여 (샘플·프로모션) | 6-3 참고. `expires_at` 은 여기에 둔다 |
+
+> ~~`product_prices`~~ 는 **Q5 결정으로 Phase 1 으로 옮겨졌다** (4-3b 참고).
+
+### 4-12. 이번 마이그레이션으로 만드는 테이블 (총 15개)
+
+| # | 테이블 | 파일 |
+|---|---|---|
+| 1 | `admins` | `_0001_foundation` |
+| 2 | `app_settings` | `_0001_foundation` |
+| 3 | `audit_logs` | `_0001_foundation` |
+| 4 | `email_logs` | `_0001_foundation` |
+| 5 | `institutions` | `_0002_institutions` |
+| 6 | `products` | `_0003_products` |
+| 7 | **`product_prices`** ★Q5 | `_0003_products` |
+| 8 | `product_materials` | `_0003_products` |
+| 9 | `orders` | `_0004_orders` |
+| 10 | `order_items` | `_0004_orders` |
+| 11 | `shipments` | `_0004_orders` |
+| 12 | `order_number_counters` | `_0004_orders` |
+| 13 | `inquiry_number_counters` | `_0004_orders` |
+| 14 | `inquiries` | `_0005_inquiries` |
+| 15 | `inquiry_messages` | `_0005_inquiries` |
+
+함수 10개: `update_updated_at` · `is_admin` · `is_super_admin` · `get_my_institution_id` ·
+`is_approved_institution` · `has_purchased_product` · `resolve_product_price` ·
+`resolve_product_pricing` · `next_order_number` · `next_inquiry_number`
 
 ---
 
@@ -688,8 +831,10 @@ RETURNING last_seq;
 | 14 | 분원 다중배송 | **구조만 지금** | `orders 1:N shipments` (4-6) |
 | 15 | 배송비 정책 | **코드 상수 + 스냅샷** | 테이블은 등급별 차등 생길 때 (4-6) |
 | 16 | 견적 → 주문 전환 | **나중에** | 지금은 `inquiries` 로 충분. `orders.source_inquiry_id` 만 |
-| 17 | 영상 접근 권한 | **필요 — 지금** | 6-3. 단 버킷 정책 결정 선행 (Q2) |
+| 17 | 영상 접근 권한 | **필요 — 지금** | 6-3. Q2 결정: `materials` private 버킷 + signed URL |
 | 18 | 교안 자동화 | **컬럼만 지금** | `product_materials` 의 4개 컬럼 (4-8) |
+| 19 | **기관별 단가 차등** | **필요 — 지금 ★변경** | Q5 결정으로 Phase 2 → Phase 1. `product_prices` + `resolve_product_price()` (4-3b) |
+| 20 | 전역 운영 설정 | **필요 — 지금** | Q6 결정. `app_settings` 단일행 (4-3c) |
 
 ### 5-1. B2B 쇼핑몰로서 빠져 있던 것 (지적)
 
@@ -698,7 +843,7 @@ RETURNING last_seq;
 | 항목 | 판단 | 비고 |
 |---|---|---|
 | **최소 주문 수량 / 리드타임** | **지금** | 시안에 "최소 주문 30세트, 배송 10영업일 전" 명시됨. `products.min_order_qty`, `lead_time_days` 로 반영. 주문 검증 로직의 핵심 |
-| **기관별 단가 차등** | 컬럼만 | B2B의 기본. `institutions.price_tier` → Q5 |
+| **기관별 단가 차등** | **지금 ★** | Q5 확정. `institutions.price_tier` + `product_prices` 테이블 + `resolve_product_price()` |
 | **VAT 처리** | **지금** | 상품가가 VAT 별도인지 포함인지 반드시 확정. `orders.vat_amount` 분리 보관 |
 | **세금계산서 후불 결제** | **지금** | B2B는 "계산서 발행 후 월말 입금"이 흔함. `payment_method='tax_invoice'` + `payment_status='unpaid'` 조합으로 수용 |
 | **주문 취소 가능 시점** | **지금(규칙만)** | `preparing` 이후 취소는 관리자 승인 필요 — 상태 전이도에 반영 |
@@ -952,79 +1097,85 @@ CLAUDE.md「분리 대비 필수 원칙」 5가지에 대한 이 설계안의 �
 
 | 단계 | 내용 | 왜 이 순서인가 |
 |---|---|---|
-| **0** | `.env.local` URL 오타 수정 | 이거 없이는 **아무것도 동작 안 함** (0-1) |
-| **1** | 공통 기반: extension, `update_updated_at()`, `is_admin()`, `get_my_institution_id()`, `admins`, `audit_logs` | 모든 RLS가 헬퍼에 의존. 가장 먼저 고정돼야 이후 정책을 안 고친다 |
-| **2** | `institutions` + 가입/승인 플로우 + 관리자 승인 화면 | 승인된 기관이 없으면 주문 자체가 불가. 미들웨어 deny-by-default 전환도 여기서 |
-| **3** | `products` + `product_materials` + 시드 이관(7장) | 주문의 전제. 화면은 이미 있어 **DB 붙이면 바로 티가 남** |
-| **4** | `inquiries` + `inquiry_messages` (2패널 UI) | 주문과 독립적이라 병렬 가능. 폼이 이미 있어 가치가 빨리 나옴 |
-| **5** | `orders` + `order_items` + `shipments` + 채번 | 1~3이 끝나야 의미가 있음 |
-| **6** | 토스페이먼츠 결제 | 주문 흐름이 검증된 뒤에 붙임 |
-| **7** | 영상/교안 게이트 (버킷 정책 결정 후) | Q2 결정 대기. 3·5에 의존 |
-| **8** | `email_logs` + Resend 알림 | 2·5의 이벤트에 붙는 부가 기능 |
-| **9** | 교안 자동화 (GitHub Actions) | 컬럼은 이미 준비됨 |
-| **10** | 정기주문 / 관리자 ERP 고도화 | 기관 30곳+ 시점 (CLAUDE.md 방침) |
+| **0** | ~~`.env.local` URL 오타 수정~~ | ✅ 완료 (PR #8) |
+| **1** | ~~설계 확정 (Q1~Q7)~~ | ✅ 완료 (11장) |
+| **2** | ~~마이그레이션 SQL 작성~~ | ✅ 완료 — `supabase/migrations/` 7개 파일 |
+| **3** | **SQL 실행** ← 지금 여기 | 대시보드에서 기존 테이블 확인 후. `docs/MIGRATION_GUIDE.md` 순서대로 |
+| **4** | 최초 관리자 계정 등록 | RLS 때문에 관리자 없이는 아무 작업도 못 함. 실행 직후 필수 |
+| **5** | `types/index.ts` 를 실제 스키마에 맞게 갱신 | 현재 타입은 설계 이전 것이라 컬럼이 다름 |
+| **6** | 기관 가입/승인 플로우 + 가입 폼 필드 보강 | 승인된 기관이 없으면 주문 불가. 미들웨어 deny-by-default 전환도 여기서 |
+| **7** | 상품 페이지를 DB 조회로 교체 (7장, ISR) | 화면이 이미 있어 **DB 붙이면 바로 티가 남** |
+| **8** | 문의 게시판 (2패널 UI) | 주문과 독립적이라 병렬 가능. 폼이 이미 있어 가치가 빨리 나옴 |
+| **9** | 주문 흐름 — **반드시 `resolve_product_pricing()` 경유** | Q5 단가 로직을 우회하면 안 됨 (11장) |
+| **10** | 토스페이먼츠 결제 | 주문 흐름이 검증된 뒤에 붙임 |
+| **11** | 영상/교안 게이트 (`materials` + signed URL) | Q2 결정 완료. 7·9에 의존 |
+| **12** | Resend 알림 + `email_logs` 기록 | 6·9의 이벤트에 붙는 부가 기능 |
+| **13** | 교안 자동화 (GitHub Actions) | 컬럼은 이미 준비됨 |
+| **14** | 기관별 단가 데이터 입력 | 테이블은 준비됨. 등급 체계 확정 후 행만 넣으면 됨 |
+| **15** | 정기주문 / 관리자 ERP 고도화 | 기관 30곳+ 시점 (CLAUDE.md 방침) |
 
-**1~3 을 하나의 마이그레이션 묶음으로** 처리하는 걸 권장한다.
-그래야 "기관 가입 → 승인 → 상품 조회" 라는 최소 동작 경로가 한 번에 검증된다.
+**3~7 이 "기관 가입 → 승인 → 상품 조회" 최소 동작 경로**다.
+여기까지 한 번에 검증하는 걸 권장한다.
 
 ---
 
-## 11. 결정이 필요한 질문
+## 11. 결정 완료 (2026-08-22)
 
-> 아래 7개는 제가 임의로 정하면 나중에 되돌리기 비싼 것들입니다.
+Q1~Q7 전부 확정되어 마이그레이션 SQL에 반영했다.
 
-### Q1. 문의 테이블 — 통합 vs 분리
-비회원 문의(공개 폼)와 회원 문의(로그인 후)를 **한 테이블**로 통합 설계했습니다.
+| Q | 질문 | 결정 | 반영 위치 |
+|---|---|---|---|
+| **Q1** | 문의 통합 vs 분리 | **통합** — 회원/비회원 한 테이블. `institution_id` NULL 여부 + `source` 로 구분 | `_0005_inquiries.sql` |
+| **Q2** | 영상 게이트 버킷 정책 | **A안** — 히어로는 `media`(public) 유지, 교안·수업영상은 `materials`(private) 신설 + signed URL | `_0007_storage.sql` |
+| **Q3** | 사업자번호 UNIQUE | **안 걸기** — 분원 각각 가입 가능. 인덱스만 두고 중복은 승인 화면에서 경고 | `_0002_institutions.sql` |
+| **Q4** | 민감컬럼 보호 방식 | **`REVOKE UPDATE`** — RLS 서브쿼리보다 단순·확실 | `_0006_rls.sql` [12] |
+| **Q5** | 기관별 단가 차등 | **차등 있음 → Phase 1 승격** ★ `product_prices` + `resolve_product_price()` | `_0003_products.sql` |
+| **Q6** | 최소주문/리드타임 | **전역 기본값 + 상품별 예외** — `app_settings` + `COALESCE` 폴백 | `_0001`, `_0003` |
+| **Q7** | `.env.local` URL 오타 | 처리 완료 (PR #8) | 0-1 |
 
-| | 통합 (제안) | 분리 |
+### Q5 결정으로 바뀐 것 (요약)
+
+초판에서는 `institutions.price_tier` 컬럼만 두고 테이블은 Phase 2 로 미뤘다.
+실제로 필요하다는 확인을 받아 **지금 만드는 것**으로 바꿨다.
+
+| | 초판 | 변경 후 |
 |---|---|---|
-| 장점 | 관리자 화면 1개, 비회원→회원 전환 시 이력 연결 쉬움 | 제약조건이 깔끔 (`institution_id NOT NULL`) |
-| 단점 | `institution_id` nullable + guest 컬럼 5개가 비어있는 행 존재 | **키즈밀처럼 3벌로 갈라져 관리자 화면도 3개** |
+| 테이블 | 없음 (Phase 2) | `product_prices` 생성 |
+| 가격 조회 | `products.price` 직접 참조 | `resolve_product_price(product_id, institution_id)` |
+| 주문 스냅샷 | `unit_price_snapshot` 만 | `unit_price_snapshot` + `base_price_snapshot` (할인폭 추적) |
+| RLS | — | 기관은 **자기에게 적용되는 가격만** 조회 가능 |
+| 마이그레이션 테이블 수 | 14개 | **15개** |
 
-→ **통합을 권장**합니다. 키즈밀이 분리했다가 실제로 고생한 부분입니다. 동의하시나요?
+**데이터는 비워둔 채 시작한다.** `product_prices` 가 비어 있으면
+`resolve_product_price()` 가 `products.price` 로 폴백하므로 지금 당장 정상 동작하고,
+나중에 행만 넣으면 주문 로직을 고치지 않고도 차등가가 적용된다.
 
-### Q2. 영상 게이트 — `media` 버킷을 private으로 바꿀까요? 🔴 중요
-현재 `media` 는 **public** 이라 URL만 알면 누구나 영상을 봅니다.
-"주문 완료 기관만 접근"을 **실제로** 강제하려면 private 버킷 + signed URL 이 필요합니다.
+### Q5 구현 시 반드시 지킬 것
 
-| 선택 | 내용 | 영향 |
-|---|---|---|
-| **A. 홈/키즈/실버 히어로 영상은 public 유지 + 교안·수업영상만 새 private 버킷** | 권장 | 히어로는 마케팅이라 공개가 맞고, 유료 자산만 보호 |
-| B. 전부 private | 가장 안전 | 히어로 영상에도 signed URL 필요 → 첫 로딩 느려짐 |
-| C. 그냥 public 유지 | 게이트는 "형식적" | 영상 유출 감수 |
+주문 생성 코드에서 **`products.price` 를 직접 읽으면 안 된다.**
+반드시 `resolve_product_price()` 를 거쳐야 기관별 단가가 적용된다.
 
-→ **A** 를 권장합니다. 새 버킷 이름은 `materials` (private) 로 제안합니다. 괜찮을까요?
+```ts
+// ❌ 이렇게 하면 기관 단가가 무시된다
+const { data: p } = await supabase.from('products').select('price').eq('id', id).single()
+const unitPrice = p.price
 
-### Q3. 사업자등록번호에 UNIQUE 를 걸까요?
-같은 법인이 **분원별로 각각 가입**할 수 있습니다 (예: ○○어린이집 1호점/2호점).
+// ✅ 반드시 이렇게
+const { data: pricing } = await supabase
+  .rpc('resolve_product_pricing', { p_product_id: id, p_institution_id: institutionId })
+  .single()
+const unitPrice = pricing.unit_price      // 기관 전용가 > 등급가 > 기본가
+const minQty   = pricing.min_order_qty    // 상품값 > 전역값 (Q6)
+```
 
-- UNIQUE 걸면: 중복 가입 방지 O, 분원 각각 가입 X
-- 안 걸면: 분원 가입 O, 중복 가입 검증은 관리자 승인 때 육안 확인
+### 아직 정해지지 않은 것 (구현 단계에서 확인 필요)
 
-→ **UNIQUE 없이 인덱스만** 걸고, 가입 시 "동일 사업자번호 기존 가입 있음" 경고만 관리자에게 표시하는 방식을 권장합니다. 어떻게 할까요?
-
-### Q4. 민감 컬럼 보호 — RLS 서브쿼리 vs 컬럼 권한 회수
-기관이 자기 `status` 를 `approved` 로 바꾸는 걸 막아야 합니다 (6-3 ①).
-`REVOKE UPDATE (status, price_tier, ...) ON institutions FROM authenticated;`
-쪽이 훨씬 단순하고 확실한데, 이 방식으로 갈까요?
-
-### Q5. 기관별 단가 차등이 있습니까?
-`institutions.price_tier` 컬럼을 넣어뒀습니다.
-"대량 주문 기관은 단가 할인" 같은 정책이 **있을 예정인지**에 따라
-Phase 2에 `product_prices(product_id, tier, price)` 테이블이 필요해집니다.
-지금은 없다면 컬럼만 두고 넘어가겠습니다.
-
-### Q6. 최소 주문 수량 30세트 / 리드타임 10영업일 — 전역인가요, 상품별인가요?
-시안에는 캘린더 상단에 한 줄로만 적혀 있습니다.
-지금은 **상품별 컬럼**(`products.min_order_qty`, `lead_time_days`)으로 뒀는데,
-전역 고정이라면 설정 테이블 하나로 빼는 게 관리가 쉽습니다. 어느 쪽인가요?
-
-### ~~Q7. `.env.local` URL 오타, 지금 고칠까요?~~ ✅ **2026-08-21 처리 완료**
-
-- `.env.local` : `uauprcrksiiluxhvrac` → `uauprcrksiiiluxhvrac` 수정, Auth/Storage 200 확인
-- `CLAUDE.md` : 확인 결과 **원래 정확** (수정 불필요)
-- `constants/index.ts` : 하드코딩된 Storage URL 3개 → `process.env.NEXT_PUBLIC_SUPABASE_URL` 참조로 교체
-- **남은 일**: Vercel 환경변수 확인 (0-4 (B) 절차) — 사용자 직접 확인 필요
+| 항목 | 언제 필요한가 |
+|---|---|
+| 등급 이름 `standard`/`preferred`/`partner` 가 실제 운영 명칭과 맞는지 | 단가 데이터 입력 전 |
+| 등급별 할인이 정률(%)인지 정액인지 | 지금은 **최종 단가를 직접 저장**하는 방식. 정률이 편하면 구조 변경 필요 |
+| VAT 별도가 맞는지 (`price_includes_vat = FALSE`) | 결제 붙이기 전 |
+| 무료배송 기준 20만원 / 배송비 3,000원 | 주문 화면 만들기 전 |
 
 ---
 
