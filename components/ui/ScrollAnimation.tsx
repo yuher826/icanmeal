@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type AnimType = 'up' | 'left' | 'right' | 'scale' | 'fade'
 
@@ -37,6 +37,14 @@ export default function ScrollAnimation({
   style,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+  /* 'visible' 여부는 반드시 React state로 관리해야 한다.
+     예전에는 el.classList.add('visible')로 DOM을 직접 조작했는데,
+     이 div는 key가 있는 리스트(예: 계절 필터로 바뀌는 상품 그리드)에서
+     같은 컴포넌트 인스턴스가 재사용되면서 delay 같은 prop만 바뀌는 경우가
+     있다. 이때 React가 className을 다시 렌더링하면서 imperatively 추가했던
+     'visible' 클래스가 통째로 덮어써져 사라지고, IntersectionObserver는
+     이미 unobserve된 상태라 다시는 복구되지 않는 버그가 있었다. */
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     const el = ref.current
@@ -46,7 +54,7 @@ export default function ScrollAnimation({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.classList.add('visible')
+          setVisible(true)
           observer.unobserve(el)
         }
       },
@@ -56,7 +64,7 @@ export default function ScrollAnimation({
     return () => observer.disconnect()
   }, [threshold])
 
-  const cls = [ANIM_CLASS[animation], delayClass(delay), className]
+  const cls = [ANIM_CLASS[animation], delayClass(delay), visible ? 'visible' : '', className]
     .filter(Boolean)
     .join(' ')
 
