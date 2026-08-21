@@ -29,6 +29,21 @@
 > 과거 `.env.local` 에 `i` 2개로 잘못 들어가 Supabase 호출이 전부 실패한 적이 있다.
 > 정본은 `NEXT_PUBLIC_SUPABASE_ANON_KEY` 의 JWT `ref` 클레임이다.
 
+## 환경변수
+
+`.env.local` + Vercel 양쪽에 있어야 한다.
+
+| 키 | 용도 | 공개 |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | 프로젝트 URL | 브라우저 노출 OK |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 익명 키 (RLS 적용) | 브라우저 노출 OK |
+| `SUPABASE_SERVICE_ROLE_KEY` | **서버 전용.** 기관 승인/반려 등 RLS·컬럼권한을 우회해야 하는 작업 | ⛔ 절대 노출 금지 |
+
+> `SUPABASE_SERVICE_ROLE_KEY` 는 **`NEXT_PUBLIC_` 접두사를 붙이면 안 된다.**
+> 붙이는 순간 브라우저 번들에 들어가 DB 전체가 열린다.
+> `lib/supabase-admin.ts` 가 `server-only` 로 방어하고 있지만, 키 이름 자체를 조심할 것.
+> Dashboard → Settings → API → `service_role` 에서 복사.
+
 ---
 
 ## 문서

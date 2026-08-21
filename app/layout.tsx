@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { SITE_CONFIG } from '@/constants'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import { SiteHeader, SiteFooter, SiteMain } from '@/components/layout/SiteChrome'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -66,9 +65,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <SiteHeader />
+        <SiteMain>{children}</SiteMain>
+        <SiteFooter />
       </body>
     </html>
   )
