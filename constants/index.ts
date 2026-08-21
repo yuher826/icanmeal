@@ -37,12 +37,24 @@ export const BRAND_ASSETS = {
 } as const
 
 /* ============================================================
+   SUPABASE STORAGE — 공개 미디어 base URL
+
+   프로젝트 URL을 하드코딩하지 않는다.
+   법인 분리 시 Supabase 프로젝트 ref가 바뀌는데, 하드코딩돼 있으면
+   코드를 뒤져가며 전부 고쳐야 한다 (CLAUDE.md「법인 분리 계획」원칙 3).
+   경로 규칙(media/videos/{kids|silver}/)은 원칙 4에 따라 유지 —
+   새 프로젝트로 파일만 복사하면 그대로 동작한다.
+   ============================================================ */
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const MEDIA_BASE = `${SUPABASE_URL}/storage/v1/object/public/media`
+
+/* ============================================================
    HERO VIDEOS (Supabase Storage)
    ============================================================ */
 export const HERO_VIDEOS = {
-  home: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/home_hero_opening.mp4',
-  kids: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/kids/kids_class.mp4',
-  silver: 'https://uauprcrksiiiluxhvrac.supabase.co/storage/v1/object/public/media/videos/silver/silver_class.mp4',
+  home: `${MEDIA_BASE}/videos/home_hero_opening.mp4`,
+  kids: `${MEDIA_BASE}/videos/kids/kids_class.mp4`,
+  silver: `${MEDIA_BASE}/videos/silver/silver_class.mp4`,
 } as const
 
 /* ============================================================
