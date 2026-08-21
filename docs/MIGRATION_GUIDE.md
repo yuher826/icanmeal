@@ -95,20 +95,75 @@ SELECT slug, price,
 
 ## 2. 최초 관리자 계정 만들기
 
-RLS 때문에 관리자 없이는 아무것도 못 한다. **시드 직후 반드시 1명 등록.**
+RLS 때문에 관리자 없이는 아무것도 못 한다. **마이그레이션 직후 반드시 1명 등록.**
+
+`admins` 테이블은 `auth.users` 를 참조하므로 **순서가 정해져 있다.**
+Auth 계정을 먼저 만들고, 그 UUID 를 `admins` 에 연결한다.
+
+### ① 🖱 대시보드 — Auth 계정 생성
 
 ```
-① Dashboard → Authentication → Users → Add user
-   이메일/비밀번호로 계정 생성 → 생성된 UUID 복사
+Supabase Dashboard → Authentication → Users → Add user → Create new user
+  Email          : 본인 이메일
+  Password       : 강한 비밀번호
+  Auto Confirm User : ✅ 체크 (안 하면 메일 인증 전까지 로그인 불가)
+→ 생성된 행의 UID(UUID) 복사
 ```
+
+> `Auto Confirm User` 를 체크하지 않으면 `email_confirmed_at` 이 NULL 로 남아
+> 로그인이 막힌다. 최초 관리자는 체크하는 게 편하다.
+
+### ② 💻 SQL Editor — `admins` 에 연결
 
 ```sql
--- ② admins 에 등록 (UUID 와 이메일을 실제 값으로 교체)
 INSERT INTO admins (auth_id, name, email, role)
-VALUES ('붙여넣은-UUID', '유대표', 'you@example.com', 'super_admin');
+VALUES (
+  '여기에-복사한-UUID',   -- ① 에서 복사한 UID
+  '유대표',
+  'you@example.com',      -- ① 에서 쓴 이메일과 동일하게
+  'super_admin'
+);
+```
 
--- ③ 확인 — TRUE 가 나와야 한다 (해당 계정으로 로그인한 세션에서)
-SELECT public.is_admin(), public.is_super_admin();
+이메일을 Auth 계정과 다르게 넣어도 INSERT 는 성공하지만, 나중에 헷갈리므로 맞춰둔다.
+
+### ③ 💻 SQL Editor — 확인
+
+```sql
+SELECT a.id, a.name, a.email, a.role, a.is_active,
+       u.email        AS auth_email,
+       u.email_confirmed_at
+  FROM admins a
+  LEFT JOIN auth.users u ON u.id = a.auth_id;
+```
+
+확인 포인트:
+
+| 항목 | 기대값 |
+|---|---|
+| `role` | `super_admin` |
+| `is_active` | `true` |
+| `auth_email` | NULL 이 아니어야 함 (NULL = UUID 를 잘못 붙여넣음) |
+| `email_confirmed_at` | NULL 이 아니어야 함 (NULL = Auto Confirm 미체크) |
+
+### ⚠️ `SELECT public.is_admin()` 은 SQL Editor 에서 FALSE 가 나온다 — 정상이다
+
+`is_admin()` 은 `auth.uid()` 로 판별하는데, SQL Editor 에는 **로그인 세션(JWT)이 없어서**
+`auth.uid()` 가 NULL 이다. 따라서 항상 `false` 를 돌려준다. **버그가 아니다.**
+
+실제 동작 확인은 앱에서 그 계정으로 로그인한 뒤에 해야 한다.
+SQL Editor 에서 굳이 흉내내려면 세션을 가장해야 한다:
+
+```sql
+-- 세션 가장 테스트 (트랜잭션 안에서만, 롤백으로 되돌림)
+BEGIN;
+  SELECT set_config('request.jwt.claims',
+                    json_build_object('sub', '여기에-복사한-UUID')::text, TRUE);
+  SELECT set_config('role', 'authenticated', TRUE);
+
+  SELECT public.is_admin()        AS is_admin,        -- true 기대
+         public.is_super_admin()  AS is_super_admin;  -- true 기대
+ROLLBACK;
 ```
 
 ---
@@ -249,6 +304,54 @@ return Response.json({ url: signed.signedUrl })
 
 `media` 버킷은 마케팅 자산이라 공개가 맞다 (Q2 결정 A안).
 `constants/index.ts` 의 `HERO_VIDEOS` 는 변경 불필요.
+
+---
+
+## 3-D. 상품 시드 실행 (24종)
+
+### 💻 SQL Editor
+
+`supabase/seeds/001_products.sql` 파일 전체를 복사해 붙여넣고 실행한다.
+
+> ⚠️ 이 파일은 **자동 생성물**이다. 직접 수정하지 말 것.
+> 상품 정보가 바뀌면 `constants/index.ts` 를 고치고 재생성한다:
+> ```bash
+> node scripts/gen-product-seed.mjs
+> ```
+> `slug` 기준 UPSERT 라 **몇 번을 실행해도 안전**하다(멱등).
+
+### 실행 후 확인
+
+```sql
+-- ① 라인별 개수 → kids 12 / silver 12
+SELECT line, count(*) FROM products WHERE deleted_at IS NULL GROUP BY line ORDER BY line;
+
+-- ② 월 누락·중복 확인 (24행, 라인별 1~12 가 정확히 한 번씩)
+SELECT line, month, count(*) AS cnt
+  FROM products WHERE deleted_at IS NULL
+ GROUP BY line, month HAVING count(*) <> 1;
+-- → 0행이면 정상
+
+-- ③ 가격 조회 함수 동작 (product_prices 가 비어 있어도 기본가가 나와야 정상)
+SELECT slug, name, price,
+       public.resolve_product_price(id, NULL) AS resolved
+  FROM products ORDER BY line, month LIMIT 5;
+-- → price 와 resolved 가 같아야 Q5 폴백 정상
+
+-- ④ 최소주문·리드타임 전역값 폴백 (Q6)
+SELECT p.slug,
+       (public.resolve_product_pricing(p.id, NULL)).*
+  FROM products p ORDER BY p.line, p.month LIMIT 3;
+-- → min_order_qty 30 / lead_time_days 10 (app_settings 전역값)
+```
+
+### 시드 후 상태
+
+| 항목 | 값 |
+|---|---|
+| `products` | 24행 (kids 12 / silver 12) |
+| `product_prices` | **0행 — 정상.** 비어 있으면 기본가로 폴백 (Q5) |
+| `product_materials` | 0행 — 교안·영상 업로드는 나중 단계 |
 
 ---
 
