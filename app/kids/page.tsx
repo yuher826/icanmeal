@@ -99,7 +99,7 @@ export default function KidsPage() {
             </div>
           </ScrollAnimation>
 
-          <MonthlyKitGrid products={KIDS_PRODUCTS} />
+          <MonthlyKitGrid products={KIDS_PRODUCTS} aspect="16 / 9" />
         </div>
       </section>
 

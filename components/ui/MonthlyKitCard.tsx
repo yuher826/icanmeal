@@ -5,9 +5,11 @@ interface Props {
   kit: MonthlyKit
   /** large: 홈 "이번 달 추천" 섹션에서 쓰는 강조 카드 */
   size?: 'default' | 'large'
+  /** 이미지 컨테이너 종횡비. 키즈(16:9 와이드)와 실버(1:1, 정사각 일러스트)가 다름 */
+  aspect?: string
 }
 
-export default function MonthlyKitCard({ kit, size = 'default' }: Props) {
+export default function MonthlyKitCard({ kit, size = 'default', aspect = '16 / 9' }: Props) {
   const isKids = kit.line === 'kids'
   const accent = isKids ? 'var(--kids-coral-deep)' : 'var(--silver-rose-deep)'
   const tint = isKids ? 'var(--kids-tint)' : 'var(--silver-tint)'
@@ -29,7 +31,7 @@ export default function MonthlyKitCard({ kit, size = 'default' }: Props) {
       <div
         style={{
           position: 'relative',
-          aspectRatio: '16 / 9',
+          aspectRatio: aspect,
           background: tint,
           overflow: 'hidden',
         }}

@@ -87,7 +87,7 @@ export default function SilverPage() {
             </div>
           </ScrollAnimation>
 
-          <MonthlyKitGrid products={SILVER_PRODUCTS} />
+          <MonthlyKitGrid products={SILVER_PRODUCTS} aspect="1 / 1" />
         </div>
       </section>
 
